@@ -1,0 +1,99 @@
+
+Single Sign On & Single Sign Off
+================================
+
+Setup:
+
+1. Account Self-Service (?)
+   - Login für alle Accounts
+   - Übersicht Gruppen, Projekte etc.
+   - Passwort Ändern
+   - E-Mail Adresse ändern
+   - Weitere Kontaktdaten (Name, Telefon, Skype, ...)
+   - Photos?
+   - SSH-Keys?
+
+1. E-Mail Server (Postfix)
+   - empfangen & senden von E-Mails
+   - Mitarbeiter
+   - Server & Services
+
+1. E-Mail Frontend (Roundcube)
+   - Webmail für Mitarbeiter
+   - Integration Account Self-Service?
+
+1. Chat-System (?)
+   - Kunden & Mitarbeiter
+   - Räume <=> Projekte / Gruppen
+   - Integrationen mit Redmine, Git, SVN, CI-Server
+
+1. Projektverwaltung (Redmine)
+   - Kunden & Mitarbeiter
+   - Admin, Projekte & Gruppen in Projekten
+   - Zugriff für CI-Server (Reports / File-Uploads)
+   - Senden & Empfangen von E-Mails
+
+1. Quellcodeverwaltung (Git, SVN)
+   - Login für ausgewählte Kunden & Mitarbeiter
+   - Ausgewählte Rollen je Projekt
+   - Zugriff für CI-Server
+
+1. Build / CI-Server (Buildbot?)
+   - Triggern von Builds / Integrationen
+   - Lesen von Logs
+   - Mitarbeiter je Projekt
+
+1. Server / VMs (PAM)
+   - Login nur per SSH-Key
+   - personalisierter Login
+   - sudo für berechtigte Logins
+
+Anwendungsfälle:
+
+- Neuer Mitarbeiter
+- Neuer Kunden-Mitarbeiter
+- Account ändert Passwort
+- Account ändert SSH-Key
+- Account ändert Daten
+- Admin ändert Mitarbeiter-Daten
+- Account wird gelöscht
+
+- Account loggt sich ein
+- Account loggt sich aus
+
+- Neues internes Projekt
+- Neues Kunden-Projekt
+- Neues gehostetes Projekt (eigene Redmine-VM)
+- Projekt abgeschlossen
+- gehostetes Projekt abgeschlossen
+
+- Neuer Mitarbeiter auf Projekt
+- Neuer Kunden-Mitarbeiter auf Projekt
+
+- Neue Integration für Projekt
+- Projekt wird auf VM deployt
+
+Ideen:
+
+* OAuth2 als Basis-Prinzip
+* zusätzlich OpenID Spezifikationen nutzen
+* Im web läuft alles in einer subdomain 
+  => zentraler Cookie hält Auth-Session-Token
+  => wird beim Logout & Login geändert
+  => alle App-Sessions werden damit ungültig
+* Anders als bei CAS müssen Konfigurationsänderungen gepusht werden
+  zB. Projektzuordnungen in Redmine => Chat, Git, Server, Buildbot
+
+Challenges:
+
+* Sicherstellen dass keine Änderungen verloren gehen
+
+Links:
+
+* "OpenID-Specs":http://openid.net/developers/specs/
+* "Heroku OAuth SSO":https://blog.heroku.com/archives/2013/11/14/oauth-sso
+* "Centralized Authentication System":http://belighted.com/en/blog/cas
+* "CAS Protocol & Java Server":https://www.apereo.org/projects/cas
+
+Thesaurus:
+* CAS - Central Authentication Service
