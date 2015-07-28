@@ -1,0 +1,4 @@
+---
+type: ruby
+plays:
+  - main.rb

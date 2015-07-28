@@ -1,0 +1,24 @@
+---
+- name: Create Redmine User
+  hosts: all
+  user: vagrant
+  gather_facts: false
+  tasks:
+  - name: Just saying Hello variable!
+    shell: hostname
+    register: ps
+
+  - debug: var=ps.stdout_lines
+
+  # - name: saying it sucks!
+  #   shell: cat ~/carmen.txt
+  #   register: pss
+
+  # - debug: pss
+
+  - name: desperately trying anything
+    apt: name=mc state=present
+    sudo: yes
+    register: aptout
+
+  - debug: var=aptout.stdout

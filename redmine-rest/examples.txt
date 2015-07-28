@@ -1,0 +1,162 @@
+
+>> require 'rest_client'
+>> rm_url = "http://localhost:8081/redmine"
+>> site = RestClient::Resource.new(rm_url, user: 'admin', password: 'Ch4n53M3', headers: {content_type: :json, accept: :json})
+=> #<RestClient::Resource:0x007faf5bc8be70
+ @block=nil,
+ @options={:user=>"admin", :password=>"Ch4n53M3"},
+ @url="http://localhost:8081/redmine">
+>> body = {project: {name: "Test One", identifier: 'test-one'}}.to_json
+=> "{\"project\":{\"name\":\"Test One\",\"identifier\":\"test-one\"}}"
+>> JSON::load site['projects.json'].post body, rm_opts
+=> {"project"=>
+  {"id"=>6,
+   "name"=>"Test One",
+   "identifier"=>"test-one",
+   "homepage"=>"",
+   "status"=>1,
+   "is_public"=>true,
+   "custom_fields"=>[{"id"=>1, "name"=>"Spezialdings", "value"=>""}],
+   "created_on"=>"2015-07-22T10:33:13Z",
+   "updated_on"=>"2015-07-22T10:33:13Z"}}
+>> site['projects/test-one.json'].delete
+=> ""
+>> body = {user: {firstname: "John F.", lastname: 'Kennicknich', login: 'jfk', password: 'marilyn', mail: 'jfk@gmail.com'}}.to_json
+=> "{\"user\":{\"firstname\":\"John F.\",\"lastname\":\"Kennicknich\",\"login\":\"jfk\",\"password\":\"marilyn\",\"mail\":\"jfk@gmail.com\"}}"
+>> # password to short:
+>> site['users.json'].post body
+RestClient::UnprocessableEntity: 422 Unprocessable Entity
+from /home/thelonius/.rbenv/versions/2.2.2/lib/ruby/gems/2.2.0/gems/rest-client-1.8.0/lib/restclient/abstract_response.rb:74:in 'return!'
+>> body = {user: {firstname: "John F.", lastname: 'Kennicknich', login: 'jfk', password: 'marilyn1', mail: 'jfk@gmail.com'}}.to_json
+=> "{\"user\":{\"firstname\":\"John F.\",\"lastname\":\"Kennicknich\",\"login\":\"jfk\",\"password\":\"marilyn1\",\"mail\":\"jfk@gmail.com\"}}"
+>> JSON::load site['users.json'].post body, rm_opts
+=> {"user"=>
+  {"id"=>6,
+   "login"=>"jfk",
+   "firstname"=>"John F.",
+   "lastname"=>"Kennicknich",
+   "mail"=>"jfk@gmail.com",
+   "created_on"=>"2015-07-22T10:42:42Z",
+   "api_key"=>"7aa474b5daa663b7276bb7ced4436e840101f664",
+   "status"=>1}}
+
+>> ret_proc = Proc.new {|resp_body, req, res| [resp_body, req, res]}
+=> #<Proc:0x007faf5b023a20@(pry):57>
+>> resp, req, res = site['users.json'].get &ret_proc
+=> ["{\"users\":[{\"id\":1,\"login\":\"admin\",\"firstname\":\"Redmine\",\"lastname\":\"Admin\",\"mail\":\"admin@example.net\",\"created_on\":\"2015-07-14T15:57:57Z\",\"last_login_on\":\"2015-07-22T12:09:09Z\"},{\"id\":8,\"login\":\"drvwegen\",\"firstname\":\"Dr.\",\"lastname\":\"v. Wegen\",\"mail\":\"drvwg@gmail.com\",\"created_on\":\"2015-07-22T11:41:45Z\"},{\"id\":6,\"login\":\"jfk\",\"firstname\":\"John F.\",\"lastname\":\"Kennicknich\",\"mail\":\"jfk@gmail.com\",\"created_on\":\"2015-07-22T10:42:42Z\"},{\"id\":5,\"login\":\"thelonius\",\"firstname\":\"Icke\",\"lastname\":\"Schon-Wieder\",\"mail\":\"t.rox@roxy.xyz\",\"created_on\":\"2015-07-14T16:07:34Z\",\"last_login_on\":\"2015-07-15T07:50:01Z\"}],\"total_count\":4,\"offset\":0,\"limit\":25}",
+ #<RestClient::Request:0x007faf5afbe3c8
+  @args=
+   {:user=>"admin",
+    :password=>"Ch4n53M3",
+    :method=>:get,
+    :url=>"http://localhost:8081/redmine/users.json",
+    :headers=>{}},
+  @block_response=nil,
+  @cookies={},
+  @headers={},
+  @max_redirects=10,
+  @method=:get,
+  @password="Ch4n53M3",
+  @payload=nil,
+  @processed_headers={"Accept"=>"*/*; q=0.5, application/xml", "Accept-Encoding"=>"gzip, deflate"},
+  @raw_response=false,
+  @ssl_opts=
+   {:verify_ssl=>1,
+    :cert_store=>
+     #<OpenSSL::X509::Store:0x007faf5afbdbd0
+      @chain=nil,
+      @error=nil,
+      @error_string=nil,
+      @time=nil,
+      @verify_callback=nil>},
+  @tf=nil,
+  @url="http://localhost:8081/redmine/users.json",
+  @user="admin">,
+ #<Net::HTTPOK 200 OK readbody=true>]
+>> JSON::parse resp, symbolize_names: true
+=> {:users=>
+    [{:id=>1,
+      :login=>"admin",
+      :firstname=>"Redmine",
+      :lastname=>"Admin",
+      :mail=>"admin@example.net",
+      :created_on=>"2015-07-14T15:57:57Z",
+      :last_login_on=>"2015-07-22T12:09:09Z"},
+     {:id=>8,
+      :login=>"drvwegen",
+      :firstname=>"Dr.",
+      :lastname=>"v. Wegen",
+      :mail=>"drvwg@gmail.com",
+      :created_on=>"2015-07-22T11:41:45Z"},
+     {:id=>6,
+      :login=>"jfk",
+      :firstname=>"John F.",
+      :lastname=>"Kennicknich",
+      :mail=>"jfk@gmail.com",
+      :created_on=>"2015-07-22T10:42:42Z"},
+     {:id=>5,
+      :login=>"thelonius",
+      :firstname=>"Icke",
+      :lastname=>"Schon-Wieder",
+      :mail=>"t.rox@roxy.xyz",
+      :created_on=>"2015-07-14T16:07:34Z",
+      :last_login_on=>"2015-07-15T07:50:01Z"}],
+    :total_count=>4,
+    :offset=>0,
+    :limit=>25}
+>> ret_proc = Proc.new {|resp_body, req, res| [resp_body, res]}
+>> res = site['users/8.json'].delete &ret_proc
+=> ["", #<Net::HTTPOK 200 OK readbody=true>]
+>> JSON::parse(site['users/5.json?include=memberships,groups'].get(), symbolize_names: true)
+=> {:user=>
+    {:id=>5,
+     :login=>"thelonius",
+     :firstname=>"Icke",
+     :lastname=>"Schon-Wieder",
+     :mail=>"t.rox@roxy.xyz",
+     :created_on=>"2015-07-14T16:07:34Z",
+     :last_login_on=>"2015-07-15T07:50:01Z",
+     :api_key=>"8ef1499e611e81cbd1c2aa97351abe058dcfdedf",
+     :status=>1,
+     :groups=>[],
+     :memberships=>
+     [{:id=>1,
+       :project=>{:id=>1, :name=>"cacaszeugs"},
+       :roles=>[{:id=>3, :name=>"Manager"}, {:id=>4, :name=>"Developer"}, {:id=>5, :name=>"Reporter"}]},
+      {:id=>2,
+       :project=>{:id=>5, :name=>"Test One"},
+       :roles=>
+       [{:id=>3, :name=>"Manager"}, {:id=>4, :name=>"Developer"}, {:id=>5, :name=>"Reporter"}]}]}}
+>> ret = site['projects/1.json'].put({project:{name: "cacas"}}.to_json, &ret_proc)
+=> ["", #<Net::HTTPOK 200 OK readbody=true>]
+>> ret = site['projects/cacas/memberships.json'].post({membership: {user_id: 6, role_ids: [5]}}.to_json, &ret_proc)
+=> ["{\"membership\":{\"id\":3,\"project\":{\"id\":1,\"name\":\"cacas\"},\"user\":{\"id\":6,\"name\":\"John F. Kennicknich\"},\"roles\":[{\"id\":5,\"name\":\"Reporter\"}]}}",
+    #<Net::HTTPCreated 201 Created readbody=true>]
+>> JSON::parse( site['projects/cacas/memberships.json'].get, symbolize_names: true)
+=> {:memberships=>
+    [{:id=>1,
+      :project=>{:id=>1, :name=>"cacas"},
+      :user=>{:id=>5, :name=>"Icke Schon-Wieder"},
+      :roles=>[{:id=>3, :name=>"Manager"}, {:id=>4, :name=>"Developer"}, {:id=>5, :name=>"Reporter"}]},
+     {:id=>3,
+      :project=>{:id=>1, :name=>"cacas"},
+      :user=>{:id=>6, :name=>"John F. Kennicknich"},
+      :roles=>[{:id=>5, :name=>"Reporter"}]}],
+    :total_count=>2,
+    :offset=>0,
+    :limit=>25}
+>> ret = site['groups.json'].post({group: {name: 'Zuarbeiter'}}.to_json, &ret_proc)
+=> ["{\"group\":{\"id\":9,\"name\":\"Zuarbeiter\"}}",
+    #<Net::HTTPCreated 201 Created readbody=true>]
+>> site['groups/9/users.json'].post({user_id: 6}.to_json)
+=> ""
+
+
+Putting group memberships to projects is the same as for users since Group is STI-derived from User.
+
+For the RestClient.get/post...-methods instead of username/password the API-key
+can be passed as param like:
+
+   params: { key: '3df6b8f595513d4290bfd509cbc7a849c60abee6' }
+
+For all methods it can of course get appended to the url.

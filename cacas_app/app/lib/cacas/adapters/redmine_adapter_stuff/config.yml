@@ -1,0 +1,10 @@
+---
+prefix: rm
+redmine_base_url: http://localhost:8081/redmine
+rest_client_opts:
+  user: admin
+  password: Ch4n53M3
+extends:
+  model:
+    id: integer
+    password: string
