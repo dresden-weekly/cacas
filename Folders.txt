@@ -1,0 +1,128 @@
+
+1. Grundstruktur
+2. Adapter & Jobs für Redmine:
+  - recruit_employee
+    - im Cacas Nutzer anlegen
+    - mit Rest im Redmine Nutzer anlegen
+  - start_project
+    - im Cacas Projekt anlegen
+    - mit Rest im Redmine Projekt anlegen
+    - mit Ansible Git Repository anlegen & verknüpfen
+3. Gruppen
+   - Employee Gruppe
+   - Gruppe neuen Projekten zuordnen
+
+app/
+  ... Rails
+  commands/
+    recruit_employee.rb
+      class RecruitEmployee : CommandBase
+        attributes surname, name, birthday, phone, ...
+      end
+    dismiss_employee.rb
+      attributes id
+    add_client_lead.rb
+      attributes companyName, website, ...
+    add_client_employee.rb
+      attributes surname, name, email, phone, ...
+    start_project.rb
+      attributes name, clientId, createClientRedmine, sourceControl, ..
+    finish_project.rb
+      event :FinishedProject
+      attributes id
+    assign_employees_to_project.rb
+      event :AssignedEmployeesToProject
+      attributes projectId, employeeIds[]
+    assign_employee_to_projects.rb
+      event :AssignedEmployeeToProjects
+      attributes projectIds[], employeeId
+  models/
+    stored_event.rb
+lib/
+  cacas/
+    command_base.rb
+    event.b
+db/
+  migrations/
+    2016-03-01_11-11-11_create_users.rb
+      def change
+        create_table :users do |t|
+          t.string :surname
+          t.string :name
+          t.string :email
+          t.string :phone
+          t.string :login
+          t.bool :is_blocked
+          t.int :redmine_id
+          t.string :redmine_password_hash
+          t.string :groups # serialized [123, 234]
+          t.id :employer # client
+          t.string :employer_position
+        end
+        create_table :projects do |t|
+          t.string :name
+          t.string :name
+          t.int :client_id # employer
+        end
+        create_table :employers do |t|
+          t.string :name
+          t.id :contact_user
+
+          t.bool :is_client
+          t.string :groups # serialized
+          # has_many :projects
+        end
+        create_table :groups do |t|
+          t.string :name
+          t.bool :every_employee
+          t.int :client_id
+          t.int :redmine_id
+          t.string :users # serialized [122, 222]
+        end
+        create_table :user_groups do |t|
+          t.id :user
+          t.id :group
+        end
+
+    2016-04-01_11-11-11_Redmine_extend_users.rb
+      def change
+        # groups that every employee is assigned to
+        create_adapter_table :redmine, :employee_groups do |t|
+          t.int :redmine_group_id
+        end
+        adapt_table :redmine, :users do |t|
+          t.int :id
+        end
+      end
+
+adapters/
+  redmine/
+    events/
+      recruit_employee/
+        adapter.rb
+          # depends # other adapter is required to run before this
+          # after   # if adapter present run this after
+          def prepare_command(command)
+            command.adapt(:redmine, [:login, :email, ...])
+          end
+          def before_validate_command(command)
+          end
+          def validate_command(command)
+          end
+          def after_validate_command(command)
+          end
+          def process_event(event)
+            Jobs.create(:redmine, event.adapted(:login, :email).merge(event.attributes(:surname, :name)))
+          end
+          def after_job(event, job_result)
+            User.find(event.id).update_adapter_attributes(:redmine, id: job_result[:id])
+          end
+        job.rb
+          require RedmineRest
+          def run(job)
+            c = RedmineRest.connect()
+            result = {}
+            result[:id] = c.create_user(...)
+            result
+          end
+      add_client_employee/
