@@ -3,10 +3,16 @@
 %table
   %thead
     %tr
-      %th Username
-      %th Firstname
-      %th Lastname
+      %th Login
+      %th Surname
+      %th Name
       %th Email
+      %th Phone
+      %th Is blocked
+      %th Redmine
+      %th Redmine password hash
+      %th Groups
+      %th Employer position
       %th
       %th
       %th
@@ -14,10 +20,16 @@
   %tbody
     - @users.each do |user|
       %tr
-        %td= user.username
-        %td= user.firstname
-        %td= user.lastname
+        %td= user.login
+        %td= user.surname
+        %td= user.name
         %td= user.email
+        %td= user.phone
+        %td= user.is_blocked
+        %td= user.redmine_id
+        %td= user.redmine_password_hash
+        %td= user.groups
+        %td= user.employer_position
         %td= link_to 'Show', user
         %td= link_to 'Edit', edit_user_path(user)
         %td= link_to 'Destroy', user, :method => :delete, :data => { :confirm => 'Are you sure?' }

@@ -1,0 +1,12 @@
+---
+- name: Cheating Redmine
+  hosts:
+  - name: redmine-vm
+    ip: 127.0.0.1
+    ansible_ssh_host: 127.0.0.1
+    ansible_ssh_port: 2222
+    port: 2222
+  user: deploy
+  tasks:
+  - name: Just saying hello
+    shell: echo Hello!

@@ -1,0 +1,21 @@
+%p#notice= notice
+
+%p
+  %b Name:
+  = @group.name
+%p
+  %b Every employee:
+  = @group.every_employee
+%p
+  %b Employer:
+  = @group.employer
+%p
+  %b Redmine:
+  = @group.redmine_id
+%p
+  %b Users:
+  = @group.users
+
+= link_to 'Edit', edit_group_path(@group)
+\|
+= link_to 'Back', groups_path

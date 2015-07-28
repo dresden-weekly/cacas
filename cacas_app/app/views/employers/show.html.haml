@@ -1,0 +1,18 @@
+%p#notice= notice
+
+%p
+  %b Name:
+  = @employer.name
+%p
+  %b Contact user:
+  = @employer.contact_user
+%p
+  %b Is client:
+  = @employer.is_client
+%p
+  %b Groups:
+  = @employer.groups
+
+= link_to 'Edit', edit_employer_path(@employer)
+\|
+= link_to 'Back', employers_path

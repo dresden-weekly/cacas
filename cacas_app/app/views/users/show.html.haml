@@ -1,17 +1,35 @@
 %p#notice= notice
 
 %p
-  %b Username:
-  = @user.username
+  %b Login:
+  = @user.login
 %p
-  %b Firstname:
-  = @user.firstname
+  %b Surname:
+  = @user.surname
 %p
-  %b Lastname:
-  = @user.lastname
+  %b Name:
+  = @user.name
 %p
   %b Email:
   = @user.email
+%p
+  %b Phone:
+  = @user.phone
+%p
+  %b Is blocked:
+  = @user.is_blocked
+%p
+  %b Redmine:
+  = @user.redmine_id
+%p
+  %b Redmine password hash:
+  = @user.redmine_password_hash
+%p
+  %b Groups:
+  = @user.groups
+%p
+  %b Employer position:
+  = @user.employer_position
 
 = link_to 'Edit', edit_user_path(@user)
 \|

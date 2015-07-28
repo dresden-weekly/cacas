@@ -1,0 +1,27 @@
+%h1 Listing employers
+
+%table
+  %thead
+    %tr
+      %th Name
+      %th Contact user
+      %th Is client
+      %th Groups
+      %th
+      %th
+      %th
+
+  %tbody
+    - @employers.each do |employer|
+      %tr
+        %td= employer.name
+        %td= employer.contact_user
+        %td= employer.is_client
+        %td= employer.groups
+        %td= link_to 'Show', employer
+        %td= link_to 'Edit', edit_employer_path(employer)
+        %td= link_to 'Destroy', employer, :method => :delete, :data => { :confirm => 'Are you sure?' }
+
+%br
+
+= link_to 'New Employer', new_employer_path

@@ -11,7 +11,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150724133732) do
+ActiveRecord::Schema.define(version: 20150728121352) do
+
+  create_table "employers", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "contact_user"
+    t.boolean  "is_client"
+    t.text     "groups"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
 
   create_table "events", force: :cascade do |t|
     t.string   "event"
@@ -19,19 +28,47 @@ ActiveRecord::Schema.define(version: 20150724133732) do
     t.datetime "created_at"
   end
 
+  create_table "groups", force: :cascade do |t|
+    t.string   "name"
+    t.boolean  "every_employee"
+    t.integer  "employer_id"
+    t.integer  "redmine_id"
+    t.text     "users"
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
+  end
+
+  add_index "groups", ["employer_id"], name: "index_groups_on_employer_id"
+
   create_table "jobs", force: :cascade do |t|
-    t.string  "event_name"
-    t.integer "last_id"
+    t.string  "adapter_name"
+    t.integer "last_even_id"
     t.boolean "solid"
   end
 
-  create_table "users", force: :cascade do |t|
-    t.string   "username"
-    t.string   "firstname"
-    t.string   "lastname"
-    t.string   "email"
+  create_table "projects", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "client_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  add_index "projects", ["client_id"], name: "index_projects_on_client_id"
+
+  create_table "users", force: :cascade do |t|
+    t.string   "login"
+    t.string   "surname"
+    t.string   "name"
+    t.string   "email"
+    t.string   "phone"
+    t.boolean  "is_blocked"
+    t.integer  "redmine_id"
+    t.string   "redmine_password_hash"
+    t.text     "groups"
+    t.string   "employer_position"
+    t.integer  "employer_id"
+    t.datetime "created_at",            null: false
+    t.datetime "updated_at",            null: false
   end
 
 end

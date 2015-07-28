@@ -1,6 +1,25 @@
-class RedmineAdapter < CacasAdapter
+class Cacas::Adapters::RecruitEmployee < CacasAdapter
 
   class << self
+    def prepare_command(command)
+      command.adapt(:redmine, [:login, :email, ...])
+    end
+    def before_validate_command(command)
+      command
+    end
+    def validate_command(command)
+      command
+    end
+    def after_validate_command(command)
+      command
+    end
+    def process_event(event)
+      Jobs.create(:redmine, event.adapted(:login, :email).merge(event.attributes(:surname, :name)))
+    end
+    def after_job(event, job_result)
+      User.find(event.id).update_adapter_attributes(:redmine, id: job_result[:id])
+    end
+
     def create_new_user command
       Rails.logger.info "RedmineAdapter processing CreateNewUser for user #{command.inspect}"
       # puts job_details
