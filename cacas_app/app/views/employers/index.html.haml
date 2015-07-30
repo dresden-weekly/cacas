@@ -21,6 +21,7 @@
         %td= link_to 'Show', employer
         %td= link_to 'Edit', edit_employer_path(employer)
         %td= link_to 'Destroy', employer, :method => :delete, :data => { :confirm => 'Are you sure?' }
+        %td= link_to 'Recruit Employee', new_recruit_employee_path(employer_id: employer.id)
 
 %br
 

@@ -13,6 +13,15 @@
   %b Groups:
   = @employer.groups
 
+%h4
+  Employees
+
+
+= render partial: 'users/users_list', locals: {users: @employer.users}
+
+
 = link_to 'Edit', edit_employer_path(@employer)
+\|
+= link_to 'Recruit Employee', new_recruit_employee_path(employer_id: @employer.id)
 \|
 = link_to 'Back', employers_path

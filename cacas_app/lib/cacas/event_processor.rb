@@ -9,7 +9,7 @@ class Cacas::EventProcessor
 
     def process event
 
-      Cacas::ADAPTERS.each do |adapter|
+      ADAPTERS.each do |adapter|
         logger.info "---------adapter.class.to_s #{adapter.to_s}"
           command = adapter.send cmd_name, command if adapter.respond_to? cmd_name
         # rescue

@@ -17,7 +17,7 @@ module CacasApp
     # config.time_zone = 'Central Time (US & Canada)'
 
     config.autoload_paths << Rails.root.join('app', 'commands')
-    config.autoload_paths << Rails.root.join('lib', '**')
+    # config.autoload_paths << Rails.root.join('lib', '**')
     # config.autoload_paths << Rails.root.join('lib')
 
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.

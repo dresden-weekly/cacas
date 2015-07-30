@@ -14,21 +14,21 @@ class Cacas::Command
     models.each do |m,atts|
       att_syms = atts.map {|a| "#{m.to_s.underscore}__#{a}".to_sym}
       define_attribute_methods *att_syms
-      # attr_accessor *att_syms
+      attr_accessor *att_syms
       @attributes += att_syms
     end
   end
 
-  def self.form_name(name)
-    define_singleton_method(:model_name) do
-      @_model_name ||= begin
-        namespace = parents.find do |n|
-          n.respond_to?(:use_relative_model_naming?) && n.use_relative_model_naming?
-        end
-        ActiveModel::Name.new(self, namespace, name)
-     end
-    end
-  end
+  # def self.form_name(name)
+  #   define_singleton_method(:model_name) do
+  #     @_model_name ||= begin
+  #       namespace = parents.find do |n|
+  #         n.respond_to?(:use_relative_model_naming?) && n.use_relative_model_naming?
+  #       end
+  #       ActiveModel::Name.new(self, namespace, name)
+  #    end
+  #   end
+  # end
 
   attr_accessor :solid
   attr_reader :adapter_fields
@@ -51,7 +51,7 @@ class Cacas::Command
     models = self.class.instance_variable_get :@models
     ActiveRecord::Base.transaction do
       models.map do |m,atts|
-        ar_inst = m.to_s.capitalize.constantize.new
+        ar_inst = m.to_s.camelize.constantize.new
         atts.each do |a|
           val = self.send "#{m.to_s.underscore}__#{a}"
           ar_inst.send "#{a.to_s}=", val

@@ -6,33 +6,17 @@ Ablauf:
 Wie nennen wir die entsprechenden 3 Funktionen? (wie oben!)
 
 
-Struktur (und Name) der Jobs Tabelle?
-
-  z.B.: Adapter-Name last-event-id solid
-
-
-Je eine Klasse pro Command und Adapter?
-
-Momentan schlecht:
-
-  commands/
-  ├── create_new_user.rb                -> Daten als JSON in events-Tabelle
-  └── created_new_user.rb               <- Daten aus `events` für Job (mit ActiveModel#from_json)
-
-  CreateNewUser < Cacas::Command
-  CreatedNewUser < Cacas::Command
-
-
-Besser ActiveModel & Co. (aus Cacas::Command) in Modul auslagern (Name Projection?) und
-in CreateNewUser bzw. Cacas::Command und Cacas::Event oder Cacas::Job etc. includen? Wie/wo CreatedNewUser?
-
-Adapter: config.yml:
-
-prefix: rm                für den Redmine-Adapter
-extends:
-  model:
-    id: integer          -> model.rm_adp_id
-    password: string     -> model.rm_adp_password
-
-
 Controller und View-Verz. für jedes Command?
+
+Wie die Transformations machen für:
+
+    2016-04-01_11-11-11_Redmine_extend_users.rb
+      def change
+        # groups that every employee is assigned to
+        create_adapter_table :redmine, :employee_groups do |t|
+          t.int :redmine_group_id
+        end
+        adapt_table :redmine, :users do |t|
+          t.int :id
+        end
+      end

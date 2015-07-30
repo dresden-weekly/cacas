@@ -11,22 +11,10 @@ class UsersController < ApplicationController
   end
 
   def new
-    @user = CreateNewUser.new
+    redirect_to employers_url, notice: 'To create new users use the "Recruit Employee"-links...'
   end
 
   def edit
-  end
-
-  def create
-    @user = CreateNewUser.new(user_params)
-
-    respond_to do |format|
-      if cacas_command @user
-        format.html { redirect_to users_url, notice: 'User was successfully created.' }
-      else
-        format.html { render :new }
-      end
-    end
   end
 
   def update

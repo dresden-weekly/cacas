@@ -3,8 +3,12 @@ Rails.application.routes.draw do
   resources :employers
   resources :projects
   resources :users
-  resources :users
-  resources :create_new_users
+  resources :recruit_employees
+
+  root 'employers#index'
+
+  get 'cacas_reload/reload'
+
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 

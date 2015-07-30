@@ -99,7 +99,7 @@ adapters/
   redmine/
     events/
       recruit_employee/
-        adapter.rb
+        event.rb
           # depends # other adapter is required to run before this
           # after   # if adapter present run this after
           def prepare_command(command)
