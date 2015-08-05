@@ -23,3 +23,18 @@ test:
 production:
   <<: *default
   database: db/production.sqlite3
+
+
+
+cacas_default: &cacas_default
+  adapter: sqlite3
+  pool: 5
+  timeout: 5000
+
+cacas_development:
+  <<: *cacas_default
+  database: db/cacas_queue_development.sqlite3
+
+cacas_production:
+  <<: *cacas_default
+  database: db/cacas_queue_production.sqlite3

@@ -11,7 +11,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150728121352) do
+ActiveRecord::Schema.define(version: 20150804073947) do
+
+  create_table "cacas_in_queues", force: :cascade do |t|
+    t.string   "adapter"
+    t.integer  "event_id"
+    t.text     "data"
+    t.boolean  "accomplished", default: false
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
+    t.string   "event"
+  end
 
   create_table "employers", force: :cascade do |t|
     t.string   "name"
@@ -69,6 +79,8 @@ ActiveRecord::Schema.define(version: 20150728121352) do
     t.integer  "employer_id"
     t.datetime "created_at",            null: false
     t.datetime "updated_at",            null: false
+    t.string   "redmine_login"
+    t.string   "redmine_mail"
   end
 
 end

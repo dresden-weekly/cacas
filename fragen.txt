@@ -20,3 +20,27 @@ Wie die Transformations machen für:
           t.int :id
         end
       end
+
+
+
+class CreaateAdapterTable
+  def initialize(ns,t)
+    @ns = ns
+    @t = t
+  end
+
+  def method_missing(n, col, *args, **map, &block)
+    if (col.is_symbol?)
+      ns_col = '_'.join(@ns, col)
+      @t.send(n, ns_col, *args, **map, &block)
+    else
+      super.method_missing(...)
+    end
+  end
+end
+
+def create_adapter_table(ns, tn, *args, **map, &block)
+  create_table('_'.join(ns,tn), *args, **map) do |t|
+    yield CreateAdapterTable.new(ns,t)
+  end
+end

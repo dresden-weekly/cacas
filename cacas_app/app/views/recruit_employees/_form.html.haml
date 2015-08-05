@@ -7,23 +7,23 @@
           %li= msg
 
   .field
-    = f.label :login
-    = f.text_field :user__login
-  .field
     = f.label :surname
     = f.text_field :user__surname
   .field
     = f.label :name
     = f.text_field :user__name
   .field
-    = f.label :email
-    = f.text_field :user__email
+    = f.label :redmine_login
+    = f.text_field :user__redmine_login
   .field
-    = f.label :phone
-    = f.text_field :user__phone
-  .field
-    = f.label :is_blocked
-    = f.check_box :user__is_blocked
+    = f.label :redmine_mail
+    = f.text_field :user__redmine_mail
+  -# .field
+  -#   = f.label :phone
+  -#   = f.text_field :user__phone
+  -# .field
+  -#   = f.label :is_blocked
+  -#   = f.check_box :user__is_blocked
   -# .field
   -#   = f.label :redmine_id
   -#   = f.number_field :user__redmine_id
@@ -33,9 +33,9 @@
   -# .field
   -#   = f.label :groups
   -#   = f.text_field :user__groups
-  .field
-    = f.label :employer_position
-    = f.text_field :user__employer_position
+  -# .field
+  -#   = f.label :employer_position
+  -#   = f.text_field :user__employer_position
   .actions
     = f.hidden_field :user__employer_id
     = f.submit 'Save'

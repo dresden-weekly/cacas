@@ -1,8 +1,8 @@
 class RecruitEmployee < Cacas::Command
   @event_name = "RecruitedEmployee"
-  involved_models user: [:login, :surname, :name, :email, :phone,
-                         :is_blocked, :redmine_id, :redmine_password_hash,
-                         :groups, :employer_position, :employer_id]
+  involved_models user: [ :surname, :name, :employer_id]
+
+  validates_presence_of  :user__name, :user__surname
 
   # form_name 'User'
   def employer

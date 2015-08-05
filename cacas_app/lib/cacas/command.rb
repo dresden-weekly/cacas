@@ -11,7 +11,9 @@ class Cacas::Command
   def self.involved_models models
     @models = models
     @attributes = []
+    @adapter_models = {}
     models.each do |m,atts|
+      atts << :id unless atts.include? :id
       att_syms = atts.map {|a| "#{m.to_s.underscore}__#{a}".to_sym}
       define_attribute_methods *att_syms
       attr_accessor *att_syms
@@ -19,48 +21,52 @@ class Cacas::Command
     end
   end
 
-  # def self.form_name(name)
-  #   define_singleton_method(:model_name) do
-  #     @_model_name ||= begin
-  #       namespace = parents.find do |n|
-  #         n.respond_to?(:use_relative_model_naming?) && n.use_relative_model_naming?
-  #       end
-  #       ActiveModel::Name.new(self, namespace, name)
-  #    end
-  #   end
-  # end
-
   attr_accessor :solid
-  attr_reader :adapter_fields
+  attr_reader :adapter_models
 
   def solid
-    @solid || true
+    @solid = true
   end
 
-  def add_adapter_fields fields
-    @adapter_fields ||= {}
-    @adapter_fields.merge fields
+  def adapter_models
+    self.class.instance_variable_get :@adapter_models
+  end
+
+  def models
+    mods = self.class.instance_variable_get(:@models).dup
+    adapter_models.each do |name, a_models|
+      a_models.each do |n, atts|
+        mods[n] ||= []
+        mods[n] += atts
+      end
+    end
+    mods
+  end
+
+  def adapt adapter, mods
+    adapter_models[adapter] =  {}
+    mods.each do |m,atts|
+      att_syms = atts.map {|a| "#{m}__#{adapter}_#{a}".to_sym}
+      adapter_models[adapter][m] = atts.map {|a| "#{adapter}_#{a}".to_sym}
+      self.class.class_eval do
+        define_attribute_methods *att_syms
+        attr_accessor *att_syms
+      end
+    end
+    self
+  end
+
+  def adapted adapter, attribs # TODO: make use of attribs arg (filter @attributes)
+    a_atts = adapter_models[adapter].map {|m, atts| atts.map {|a| "#{m}__#{a}"} }.flatten
+    Hash[*(self.class.instance_variable_get(:@attributes)+a_atts).map {|a| [a, self.send(a)]}.flatten]
+  end
+
+  def command_name
+    self.class.name.to_sym
   end
 
   def event_name
     self.class.event_name
-  end
-
-  def save
-    succ = true
-    models = self.class.instance_variable_get :@models
-    ActiveRecord::Base.transaction do
-      models.map do |m,atts|
-        ar_inst = m.to_s.camelize.constantize.new
-        atts.each do |a|
-          val = self.send "#{m.to_s.underscore}__#{a}"
-          ar_inst.send "#{a.to_s}=", val
-        end
-        succ &&= ar_inst.save
-      end
-    end
-    # maybe transliterate errors to the AM-attributes?
-    succ
   end
 
   def attributes

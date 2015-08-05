@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  adapter: MyString
+  event_id: 1
+  data: MyText
+  solid: false
+
+two:
+  adapter: MyString
+  event_id: 1
+  data: MyText
+  solid: false

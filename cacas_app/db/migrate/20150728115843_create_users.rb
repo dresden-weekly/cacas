@@ -6,7 +6,7 @@ class CreateUsers < ActiveRecord::Migration
       t.string :name
       t.string :email
       t.string :phone
-      t.boolean :is_blocked
+      t.boolean :is_blocked, default: false
       t.integer :redmine_id
       t.string :redmine_password_hash
       t.text :groups
