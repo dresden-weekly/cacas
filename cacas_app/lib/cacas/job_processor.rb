@@ -3,6 +3,7 @@ require 'active_support/inflector'
 require 'json'
 require 'pathname'
 require_relative 'cacas.rb'
+require_relative 'configs.rb'
 require_relative 'adapter.rb'
 
 

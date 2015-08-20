@@ -15,6 +15,8 @@
       %th
       %th
       %th
+      %th
+      %th
 
   %tbody
     - users.each do |user|
@@ -31,6 +33,7 @@
         %td= user.groups
         %td= user.employer_position
         %td= link_to 'Employer', employer_path(user.employer_id)
+        %td= link_to 'Dismiss', new_dismiss_employee_path(user__id: user.id)
         %td= link_to 'Show', user
         %td= link_to 'Edit', edit_user_path(user)
         %td= link_to 'Destroy', user, :method => :delete, :data => { :confirm => 'Are you sure?' }

@@ -27,8 +27,10 @@ class Cacas::Adapters::Redmine::RecruitEmployee < Cacas::CommandEvent
     end
     def after_job(back_queue, job)
       # User.find(event.id).update_adapter_attributes(:redmine, id: job_result[:id])
-      succ = User.find(back_queue.data['user__id']).update(redmine_id: back_queue.data['user__redmine_id'])
-      job.update(accomplished: true) if succ
+      ActiveRecord::Base.transaction do
+        succ = User.find(back_queue.data['user__id']).update(redmine_id: back_queue.data['user__redmine_id'])
+        job.update(accomplished: true) if succ
+      end
     end
   end
 end

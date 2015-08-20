@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :projects
   resources :users
   resources :recruit_employees
+  resources :dismiss_employees
 
   root 'employers#index'
 

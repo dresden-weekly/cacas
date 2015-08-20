@@ -5,7 +5,7 @@ class Cacas::Command
   include ActiveModel::Validations
 
   class << self
-    attr_reader :event_name
+    attr_reader :event_name, :actions
   end
 
   def self.involved_models models
@@ -21,11 +21,15 @@ class Cacas::Command
     end
   end
 
-  attr_accessor :solid
+  # attr_accessor :solid
   attr_reader :adapter_models
 
-  def solid
-    @solid = true
+  # def solid
+  #   @solid = true
+  # end
+
+  def action model
+    self.class.actions[model]
   end
 
   def adapter_models

@@ -21,7 +21,7 @@ app/
       end
     dismiss_employee.rb
       attributes id
-    add_client_lead.rb
+    add_client_lead.rb   ?????
       attributes companyName, website, ...
     add_client_employee.rb
       attributes surname, name, email, phone, ...

@@ -1,0 +1,10 @@
+%h1 Dismiss Employee
+
+.employer_line
+  employed by
+  %strong
+    = @dismiss_employee.employer.name
+
+= render 'form'
+
+= link_to 'Back', users_path

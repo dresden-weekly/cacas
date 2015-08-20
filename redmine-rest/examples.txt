@@ -23,13 +23,13 @@
 => ""
 >> body = {user: {firstname: "John F.", lastname: 'Kennicknich', login: 'jfk', password: 'marilyn', mail: 'jfk@gmail.com'}}.to_json
 => "{\"user\":{\"firstname\":\"John F.\",\"lastname\":\"Kennicknich\",\"login\":\"jfk\",\"password\":\"marilyn\",\"mail\":\"jfk@gmail.com\"}}"
->> # password to short:
+>> # password to short:                                                                                ^^^^^^^
 >> site['users.json'].post body
 RestClient::UnprocessableEntity: 422 Unprocessable Entity
 from /home/thelonius/.rbenv/versions/2.2.2/lib/ruby/gems/2.2.0/gems/rest-client-1.8.0/lib/restclient/abstract_response.rb:74:in 'return!'
 >> body = {user: {firstname: "John F.", lastname: 'Kennicknich', login: 'jfk', password: 'marilyn1', mail: 'jfk@gmail.com'}}.to_json
 => "{\"user\":{\"firstname\":\"John F.\",\"lastname\":\"Kennicknich\",\"login\":\"jfk\",\"password\":\"marilyn1\",\"mail\":\"jfk@gmail.com\"}}"
->> JSON::load site['users.json'].post body, rm_opts
+>> JSON::load site['users.json'].post body, rm_opts #                                                  ^min. 8^
 => {"user"=>
   {"id"=>6,
    "login"=>"jfk",

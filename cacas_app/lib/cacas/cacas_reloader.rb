@@ -2,6 +2,7 @@ module CacasReloader
   def self.load_em
     cacas_dir = Rails.root.join('lib','cacas')
     load cacas_dir.join 'cacas.rb'
+    load cacas_dir.join 'configs.rb'
     load cacas_dir.join 'command_event.rb'
     load cacas_dir.join 'command.rb'
     load cacas_dir.join 'adapter.rb'
