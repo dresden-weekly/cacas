@@ -1,0 +1,28 @@
+Anforderungen
+=============
+
+- Soll bspw. ein Emailserver-Plugin austauschbar sein z.B. (Dovecot -> Courier),
+
+  - um aufgrund bestehender Daten/Events Konten auf einem neuen Server einzurichten?
+  - um im Falle eines Neuanfangs die Wahl zu haben?
+
+  In beiden Fällen müßte eine durch Vorgaben definierte Einheitlichkeit der generierten "Incidents" gegeben sein, anders gesagt eine außerhalb des Plugins gegebene Spezifikation der "Schnittstelle Event".
+
+
+- Eine Validierung von Commands durch andere Plugins ist nicht sinnvoll?
+
+- Message-(bzw. Command-)Queue / asynchrone Verarbeitung?
+
+
+
+
+
+
+
+Begriffe
+========
+
+Projektion
+----------
+
+"A set of event handlers that work together to build and maintain a read model."?

@@ -11,7 +11,7 @@ class Cacas::Command
   def self.involved_models models
     @models = models
     @attributes = []
-    @adapter_models = {}
+    @custodian_models = {}
     models.each do |m,atts|
       atts << :id unless atts.include? :id
       att_syms = atts.map {|a| "#{m.to_s.underscore}__#{a}".to_sym}
@@ -22,7 +22,7 @@ class Cacas::Command
   end
 
   # attr_accessor :solid
-  attr_reader :adapter_models
+  attr_reader :custodian_models
 
   # def solid
   #   @solid = true
@@ -32,13 +32,13 @@ class Cacas::Command
     self.class.actions[model]
   end
 
-  def adapter_models
-    self.class.instance_variable_get :@adapter_models
+  def custodian_models
+    self.class.instance_variable_get :@custodian_models
   end
 
   def models
     mods = self.class.instance_variable_get(:@models).dup
-    adapter_models.each do |name, a_models|
+    custodian_models.each do |name, a_models|
       a_models.each do |n, atts|
         mods[n] ||= []
         mods[n] += atts
@@ -47,11 +47,11 @@ class Cacas::Command
     mods
   end
 
-  def adapt adapter, mods
-    adapter_models[adapter] =  {}
+  def adapt custodian, mods
+    custodian_models[custodian] =  {}
     mods.each do |m,atts|
-      att_syms = atts.map {|a| "#{m}__#{adapter}_#{a}".to_sym}
-      adapter_models[adapter][m] = atts.map {|a| "#{adapter}_#{a}".to_sym}
+      att_syms = atts.map {|a| "#{m}__#{custodian}_#{a}".to_sym}
+      custodian_models[custodian][m] = atts.map {|a| "#{custodian}_#{a}".to_sym}
       self.class.class_eval do
         define_attribute_methods *att_syms
         attr_accessor *att_syms
@@ -60,8 +60,8 @@ class Cacas::Command
     self
   end
 
-  def adapted adapter, attribs # TODO: make use of attribs arg (filter @attributes)
-    a_atts = adapter_models[adapter].map {|m, atts| atts.map {|a| "#{m}__#{a}"} }.flatten
+  def adapted custodian, attribs # TODO: make use of attribs arg (filter @attributes)
+    a_atts = custodian_models[custodian].map {|m, atts| atts.map {|a| "#{m}__#{a}"} }.flatten
     Hash[*(self.class.instance_variable_get(:@attributes)+a_atts).map {|a| [a, self.send(a)]}.flatten]
   end
 

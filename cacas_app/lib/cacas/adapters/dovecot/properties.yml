@@ -1,3 +1,0 @@
----
-depends: []
-run_after: ['Cacas::Adapters::Redmine']

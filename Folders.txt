@@ -21,9 +21,9 @@ app/
       end
     dismiss_employee.rb
       attributes id
-    add_client_lead.rb   ?????
+    add_customer.rb   ?????
       attributes companyName, website, ...
-    add_client_employee.rb
+    add_customer_employee.rb
       attributes surname, name, email, phone, ...
     start_project.rb
       attributes name, clientId, createClientRedmine, sourceControl, ..

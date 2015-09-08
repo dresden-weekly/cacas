@@ -1,0 +1,39 @@
+
+Events
+------
+id  event             refs                     data
+1   CreatedFiveUsers  []                       {users: [Erwin, Gudrun,...]}
+2   CreatedUser       [[1, CreatedFiveUsers]]  {user: Erwin, ....}
+3   CreatedUser       [[1, CreatedFiveUsers]]  {user: Gudrun,...}
+4   CreatedUser       [[1, CreatedFiveUsers]]  {user: ...}
+5   CreatedUser       [[1, CreatedFiveUsers]]  {user: ...}
+6   CreatedUser       [[1, CreatedFiveUsers]]  {user: ...}
+
+Sagas
+-----
+id saga               data
+1  MultiUsercreation  {users: [Erwin, Gudrun,...]}
+2  SingleUsercreation {user: Erwin, ....}         
+3  SingleUsercreation {user: Gudrun,...}          
+4  SingleUsercreation {user: ...}                 
+5  SingleUsercreation {user: ...}                 
+6  SingleUsercreation {user: ...}                 
+                                                  
+Index
+-----
+ref saga_id 
+1   1
+2   2
+...
+___________________________
+
+
+Events
+------
+id  event                refs
+1   RecruitedEmployee    []  
+2   
+3
+4
+5
+

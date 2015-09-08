@@ -1,0 +1,48 @@
+                                                Dovecot                                                             Redmine                                                                           
+                                                                                                                                                                     
+RecruitEmployee -> [RecruitedEmployee]          [RecruitedEmployee]
+  attributes surname,                             surname, name                                                                      
+  name, birthday,                                 -> CreateEmployeeEmailAccount -> [CreatedEmployeeEmailAccount]                                                                                      
+  phone, ...                                                                                                                                                        
+                                                                                                                                                 
+                                                [CreatedEmployeeEmailAccount]                                       [CreatedEmployeeEmailAccount]                                          
+                                                  erstelle Emailaccount                                               -> CreateEmployeeRedmineAccount -> [CreatedEmployeeRedmineAccount]                
+                                                  localpart@hicknha...com                                                    
+                                                                                                                    [CreatedEmployeeRedmineAccount]                    
+                                                                                                                      erstelle Redmine Account                       
+                                                                                                                      Job ergibt: redmine_id
+                                                                                                                      -> GetRedmineUserAccountId -> [GotRedmineUserAccountId]
+                                                                                                                                                        
+																												    [GotRedmineUserAccountId]
+																												       Verarbeitung nicht nötig,
+																												       aber vielleicht woanders?
+
+
+DismissEmployee -> [DismissedEmployee]
+  attributes id
+
+
+
+add_customer
+  attributes companyName, website, ...
+
+
+add_customer_employee
+  attributes surname, name, email, phone, ...
+
+
+start_project
+  attributes name, clientId, createClientRedmine, sourceControl, ..
+
+
+finish_project
+  event :FinishedProject
+  attributes id
+
+
+assign_employees_to_project
+  event :AssignedEmployeesToProject
+  attributes projectId, employeeIds[]
+assign_employee_to_projects
+  event :AssignedEmployeeToProjects
+  attributes projectIds[], employeeId
