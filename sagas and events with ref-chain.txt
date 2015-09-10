@@ -1,9 +1,11 @@
+# coding: utf-8
 
 Events
 ------
 id  event             refs                     data
+---------------------------------------------------------------------------
 1   CreatedFiveUsers  []                       {users: [Erwin, Gudrun,...]}
-2   CreatedUser       [[1, CreatedFiveUsers]]  {user: Erwin, ....}
+2   CreatedUser       [[1, CreatedFiveUsers]]  {user: Erwin,...}
 3   CreatedUser       [[1, CreatedFiveUsers]]  {user: Gudrun,...}
 4   CreatedUser       [[1, CreatedFiveUsers]]  {user: ...}
 5   CreatedUser       [[1, CreatedFiveUsers]]  {user: ...}
@@ -12,28 +14,73 @@ id  event             refs                     data
 Sagas
 -----
 id saga               data
+---------------------------------------------------
 1  MultiUsercreation  {users: [Erwin, Gudrun,...]}
-2  SingleUsercreation {user: Erwin, ....}         
-3  SingleUsercreation {user: Gudrun,...}          
-4  SingleUsercreation {user: ...}                 
-5  SingleUsercreation {user: ...}                 
-6  SingleUsercreation {user: ...}                 
-                                                  
+2  SingleUsercreation {user: Erwin,...}
+3  SingleUsercreation {user: Gudrun,...}
+4  SingleUsercreation {user: ...}
+5  SingleUsercreation {user: ...}
+6  SingleUsercreation {user: ...}
+
 Index
 -----
-ref saga_id 
-1   1
-2   2
+ref saga_id  type
+-------------------------------
+1   1        MultiUsercreation
+2   2        SingleUsercreation
 ...
 ___________________________
 
+class Cacas::Saga < ActiveRecord::Base
+  ...
+  class << self
+    def create_on *events
+      @create_on = events
+    end
+    def handle event
+      ref = event.refs.detect {|id, name| @create_on.include? name}
+      if ref
+        inst = Index.where(ref: ref.first, type: self.name).saga
+      elsif @create_on.include? event.name
+        inst = self.new
+      else
+        raise "Mist"
+      end
+      ...
+    end
+  end
+  def register_external_event name, refs
+    ExternalEvent.create event: name, refs: refs  # returned instance has a #get_link(additional_params) method
+  end                                             # which returns a link that creates the named event with the refs...
+  def unregister_external_event ext_evt_hash
+  ...
+end
 
 Events
 ------
-id  event                refs
-1   RecruitedEmployee    []  
-2   
-3
-4
-5
+id  event                 refs                      data
+------------------------------------------------------------------------------------------------------
+1   AnnouncedTraining     []                        {participants: [one@two.com, two@one.com,...],
+                                                     timers: {'2015-09-25T12:00:00': EndSubscription}}
+2   ConfirmedSubscrpt     [[1, AnnouncedTraining]]  {participant_hash: 345678abcdfe}
+3   ConfirmedSubscrpt     [[1, AnnouncedTraining]]  {participant_hash: 234567abcdfe}
+...
+25  EndedSubscription     [[1, AnnouncedTraining]]
 
+Sagas
+-----
+id  saga               data
+-------------------------------------------------------------------------------------------------------
+1   OrganizeTraining   {participants: {345678abcdfe: one@two.com, 234567abcdfe: two@one.com,...},
+                        confirmed: [one@two.com,...], timers: {'2015-09-25T12:00:00': EndSubscription}}
+
+
+Index
+-----
+ref  saga_id   type
+--------------------------------
+1    1         OrganizeTraining
+2    1         OrganizeTraining   - hier wurde one@two.com dem confirmed-array hinzugefügt
+3    1         OrganizeTraining
+...
+5    1         OrganizeTraining
