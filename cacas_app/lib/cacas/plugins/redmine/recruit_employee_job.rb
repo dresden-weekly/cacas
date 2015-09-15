@@ -1,4 +1,4 @@
-module Cacas::Custodians::Redmine::RecruitEmployeeSaga
+module Cacas::Plugins::Redmine::RecruitEmployeeSaga
   class RecruitedEmployeeJob < Cacas::Job
     extend Cacas::EventConfig
     require 'rest_client'
@@ -7,7 +7,7 @@ module Cacas::Custodians::Redmine::RecruitEmployeeSaga
     class << self
 
       def run job
-        Cacas::JobProcessor.logger.info "RedmineCustodian processing #{job.inspect}"
+        Cacas::JobProcessor.logger.info "RedminePlugin processing #{job.inspect}"
         ret_proc = Proc.new {|resp_body, req, res| [resp_body, res]}
         opts = config[:rest_client_opts].merge({headers: {content_type: :json, accept: :json}})
         site = RestClient::Resource.new(config[:redmine_base_url], opts)
@@ -18,7 +18,7 @@ module Cacas::Custodians::Redmine::RecruitEmployeeSaga
                      mail: job.data['user__redmine_mail']}
         Cacas::JobProcessor.logger.debug  "job.data['user__redmine_mail'] #{job.data['user__redmine_mail']} user_atts #{user_atts}"
         res, ro = site['users.json'].post({user: user_atts}.to_json, &ret_proc)
-        job_creds = {custodian: job.custodian, event: job.event, event_id: job.event_id}
+        job_creds = {plugin: job.plugin, event: job.event, event_id: job.event_id}
         if ro.code == "201"
           rm_data = JSON::load res #, symbolize_names: true
           CacasBackQueue.create_or_update job_creds.merge(accomplished: true,

@@ -1,7 +1,7 @@
-module Cacas::Custodians::Redmine
+module Cacas::Plugins::Redmine
   # puts __FILE__
-  extend Cacas::Custodian
-  extend Cacas::CustodianConfig
+  extend Cacas::Plugin
+  extend Cacas::PluginConfig
 
 
   # vali_names = Proc.new do |record, attr, value|

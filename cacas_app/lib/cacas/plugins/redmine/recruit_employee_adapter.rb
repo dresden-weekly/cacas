@@ -1,4 +1,4 @@
-module Cacas::Custodians::Redmine::RecruitEmployeeSaga
+module Cacas::Plugins::Redmine::RecruitEmployeeSaga
   class RecruitEmployee < Cacas::Adapter
     extend Cacas::EventConfig
     @event_name = 'RecruitedEmployee'
@@ -24,10 +24,10 @@ module Cacas::Custodians::Redmine::RecruitEmployeeSaga
       end
       def process_event(event, command)
         # Job.create(:redmine, event.adapted(:login, :email).merge(event.attributes(:surname, :name)))
-        JobQueue.create(custodian: :redmine, event: event.event, event_id: event.id, data: command.adapted(:redmine, [:surname, :name]))
+        JobQueue.create(plugin: :redmine, event: event.event, event_id: event.id, data: command.adapted(:redmine, [:surname, :name]))
       end
       def after_job(back_queue, job)
-        # User.find(event.id).update_custodian_attributes(:redmine, id: job_result[:id])
+        # User.find(event.id).update_plugin_attributes(:redmine, id: job_result[:id])
         ActiveRecord::Base.transaction do
           succ = User.find(back_queue.data['user__id']).update(redmine_id: back_queue.data['user__redmine_id'])
           job.update(accomplished: true) if succ

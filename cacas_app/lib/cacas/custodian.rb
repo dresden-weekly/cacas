@@ -1,4 +1,4 @@
-module Cacas::Custodian
+module Cacas::Plugin
   cattr_accessor :logger
 
   def process_callback callback, command
@@ -74,7 +74,7 @@ module Cacas::Custodian
   end
 
   def concerned? job
-    name.split('::')[-1].underscore == job.custodian
+    name.split('::')[-1].underscore == job.plugin
   end
 
   def have_adapter? command

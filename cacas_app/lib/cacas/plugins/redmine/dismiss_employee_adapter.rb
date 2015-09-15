@@ -1,4 +1,4 @@
-module Cacas::Custodians::Redmine::DismissEmployeeSaga
+module Cacas::Plugins::Redmine::DismissEmployeeSaga
 
   # on_event :DismissedEmployee do |ev|
   #   saga = ...
@@ -36,7 +36,7 @@ module Cacas::Custodians::Redmine::DismissEmployeeSaga
       #   command
       # end
       def process_event(event, command)
-        JobQueue.create(custodian: :redmine, event: event.event, event_id: event.id, data: command.adapted(:redmine, [:id]))
+        JobQueue.create(plugin: :redmine, event: event.event, event_id: event.id, data: command.adapted(:redmine, [:id]))
       end
       def after_job(back_queue, job)
           job.update(accomplished: true)
