@@ -1,8 +1,0 @@
----
-- name: Cheating Redmine
-  hosts: 127.0.0.1:2222
-  user: deploy
-  gather_facts: false
-  tasks:
-  - name: Just saying hello
-    shell: echo Hello!

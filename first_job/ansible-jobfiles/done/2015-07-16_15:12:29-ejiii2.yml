@@ -1,7 +1,0 @@
----
-- name: Cheating Redmine
-  hosts: roxy.xyz
-  user: thelonius
-  tasks:
-  - name: Just saying hello
-    shell: echo Hello!
