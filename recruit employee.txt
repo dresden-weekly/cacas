@@ -1,0 +1,115 @@
+events
+---
+- id: 1
+  event: RecruitedEmployee
+  data:
+    'employee#1-1':
+      name: Erika
+      surname: Fiedler
+
+- id: 2
+  event: CreatedEmployeeEmailAccount
+  data:
+    'employee#1-1':
+      email: erika.fiedler@hackyourself.com
+
+- id: 3
+  event: CreatedEmployeeRedmineAccount
+  data:
+    'employee#1-1':
+      redmine_id: 1234              # ?????
+
+# Replay mit neuer Dovecot Instanz:
+
+- id: 4
+  event: CreatedEmployeeEmailAccount
+  data:
+    'employee#1-1':
+      email: erika.fiedler@hackyourself.com
+
+
+plugin_instances
+---
+- id: 47
+  name: Alte Kiste
+  host: alte_kiste.vhosts.hackyourself.com
+  plugin: dovecot
+  active: no
+
+- id: 69
+  name: Altes Haupt-Redmine
+  host: redmine.vhosts.hackyourself.com
+  plugin: redmine
+  active: yes
+
+- id: 78
+  name: Nigelnagelneuer Emailserver
+  host: das_neueste.vhosts.hackyourself.com
+  plugin: dovecot
+  active: yes
+
+
+
+index
+---
+- event_id: 1
+  instance_id: 47
+  saga: DovecotRecruitEmployeeSaga
+
+- event_id: 1
+  instance_id: 69
+  saga: RedmineRecruitEmployeeSaga
+
+- event_id: 2
+  instance_id: 47
+  saga: DovecotRecruitEmployeeSaga
+
+- event_id: 2
+  instance_id: 69
+  saga: RedmineRecruitEmployeeSaga
+
+- event_id: 3
+  instance_id: 69
+  saga: RedmineRecruitEmployeeSaga
+
+- event_id: 1
+  instance_id: 78
+  saga: DovecotRecruitEmployeeSaga
+
+  # Replay:
+
+- event_id: 4
+  instance_id: 78
+  saga: DovecotRecruitEmployeeSaga
+
+
+
+employees
+---
+- evid: 1
+  entid: 1
+  name: Erika
+  surname: Fiedler
+  employer_evid: -120
+  employer_entid: 1
+
+
+dovecot_employees
+---
+- evid: 1
+  entid: 1
+  instance_id: 47
+  email: erika.fiedler@hackyourself.com
+
+
+redmine_employees
+---
+- evid: 1
+  entid: 1
+  instance_id: 69
+  redmine_id: 234
+
+- evid: 1
+  entid: 1
+  instance_id: 78
+  redmine_id: 26

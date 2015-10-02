@@ -1,0 +1,40 @@
+---
+- id: 10
+  event: GotMoneyFromAtm
+  data:
+    amount: 100
+    transaction: 7435643564
+    time: 1:22 p.m.
+
+- id: 20
+  event: BoughtMetroTickets
+  data:
+    count: 4
+    amount: -12
+    machine: 85364
+    time: yesterday
+
+- id: 30
+  event: GrabbedALunch
+  data:
+    amount: -8
+    cost: ?
+    time: 5 p.m.
+    menu: alacarte
+    place: "Luigi's"
+
+- id: 40
+  event: FoundACoin
+  data:
+    amount: 1
+    gps: 33.333333353 87.231111241234
+    time: five o clock
+
+- id: 50
+  event: TookTaxi
+  data:
+    amount: -14
+    rideDuration: 465
+    taxiCompany: Shit Cabs
+    route: westward
+    time: 6:23 a.m.

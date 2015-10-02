@@ -1,28 +1,75 @@
 Anforderungen
 =============
 
-- Soll bspw. ein Emailserver-Plugin austauschbar sein z.B. (Dovecot -> Courier),
+- Ein Plugin (bspw. ein Emailserver-Plugin) muß austauschbar sein (z.B. Dovecot -> Courier),
 
-  - um aufgrund bestehender Daten/Events Konten auf einem neuen Server einzurichten?
-  - um im Falle eines Neuanfangs die Wahl zu haben?
+  - um aufgrund bestehender Daten/Events Konten auf einem anderen Server einzurichten.
+  - nicht nur, um im Falle eines kompletten Neuanfangs die Wahl zu haben.
 
-  In beiden Fällen müßte eine durch Vorgaben definierte Einheitlichkeit der generierten "Incidents" gegeben sein, anders gesagt eine außerhalb des Plugins gegebene Spezifikation der "Schnittstelle Event".
+  In beiden Fällen muß eine durch Vorgaben definierte Einheitlichkeit der generierten "Incidents" gegeben sein, anders gesagt eine außerhalb des Plugins gegebene Spezifikation der "Schnittstelle Event".
 
+- Ein Plugin beinhaltet eine Menge von Event-Handlern, die u.a. *Jobs* generieren, die auf *Instanzen* (z.B. Mail-Server) ausgeführt werden.
+  Wird eine Instanz ausgetauscht, oder zusätzliche Hinzugefügt, müssen
 
-- Eine Validierung von Commands durch andere Plugins ist nicht sinnvoll?
+  - die vorhandenen Jobs wiederverwendet werden? (kann eigentlich nicht funktionieren)
+  - die Event-Handler im Kontext der neuen Instanzen ausgeführt werden, um neue Jobs zu generieren?
+  - die Jobs irgendwie anders generiert werden?
+
+  Ein *Replay* (oder Rebuild) im herkömmlichen Sinne würde bedeuten, alle vorhandenen Events neu zu projizieren, sprich alle Handler erneut auszuführen. Da das neue Jobs für alle Plugins/Instanzen generieren würde, muß das vermieden werden. Wir bräuchten also eine Art partielles oder selektives Rebuild.
+
+- Eine Validierung von Commands durch andere Plugins ist nicht sinnvoll.
 
 - Message-(bzw. Command-)Queue / asynchrone Verarbeitung?
 
+- Events enthalten nicht db-generierte ids; z.B. von Event.id abgeleitet (für User, Employee, etc.)
 
+- Die in einer Saga zusammengefassten Events können eine feste Reihenfolge haben, müssen aber nicht.
 
+- Eine Saga-Instanziierung muß durch verschiedene Events angestossen werden können.
 
+- Ein Event kann in mehreren Sagas desselben Plugins verarbeitet werden (also mehrere gleichnamige Event-Handler in einem Plugin).
 
+- Event-Handler, die einen Job generieren, sollten ein Event *triggern* (publizieren oder besser populate), dessen Vorhandensein als Bedingung dienen kann, eine mehrfache Ausführung zu vermeiden.
 
 
 Begriffe
 ========
 
+Plugin
+------
+Ein Plugin schlägt die Brücke zwischen der zentralen Administration und externen Anwendungen wie Projektverwaltung, Emailserver, usw. Es konfiguriert eine oder meherere Instanzen dieser Anwendungen.
+
+
 Projektion
 ----------
+Die die Event-Handler, die die Events projizieren.
 
-"A set of event handlers that work together to build and maintain a read model."?
+Auch die prozierten Daten, die man vielleicht besser als *Projiziertes* bezeichnen sollte.
+
+
+Neue Begriffe
+=============
+
+Incident
+--------
+Einheit, bestehend aus Command und Event (z.B. RecruitEmployee und RecruitedEmployee).
+
+
+Retrospect / Rückschau
+----------------------
+Selektive Rückschau auf Events bzw. durch diese definierte Daten.
+
+
+Primär-/Sekundär-Event
+----------------------
+Sekundärevents entstehen bei der Verarbeitung der Primärevents.
+
+
+Record-Event
+------------
+Sekundär-Event, dessen Daten dazu dienen, die Ausführung eines Handlers im Kontext anderer Events bzw. bestimmter Daten als geschehen festzuhalten.
+
+
+Das *past-tense*-Problem
+------------------------
+Die übliche Verwendung der past-tense Zeitform für Events führt immer wieder zu Konfusion. Z.B. das CreatedEmployeeRedmineAccount-Event tritt auf *bevor* der Account angelegt wird. Eventuell könnte man das durch zusätzliche Verwendung des *present-perfect* vermeiden. Also statt `present-tense -> past-tense`, (z.B. `CreateEmployeeRedmineAccount -> CreatedEmployeeRedmineAccount`) `present-tense -> present-perfect -> past-tense`, z.B. `CreateEmployeeRedmineAccount -> HaveCreatedEmployeeRedmineAccount -> CreatedEmployeeRedmineAccount`.

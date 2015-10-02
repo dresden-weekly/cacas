@@ -1,48 +1,76 @@
-                                                Dovecot                                                             Redmine                                                                           
-                                                                                                                                                                     
+"Core"                                          Dovecot                                                                   Redmine                                                                  CI
+
+                                                                                                                          CreateRedmineInstance -> [CreatedRedmineInstance]
+                                                                                                                            eigene(r) Controller/Views und Tabelle
+
+                                                                                                                          [CreatedRedmineInstance]
+                                                                                                                            VM-anlegen, ...
+
+                                                                                                                          AssignRedmineInstance -> [AssignedRedmineInstance]
+
+                                                                                                                          ________________________________________
+                                                                                                                          nach zuweisen der Instanz (als 'Default', oder kundeneigene)
+
+                                                                                                                          Replay
+
+
 RecruitEmployee -> [RecruitedEmployee]          [RecruitedEmployee]
-  attributes surname,                             surname, name                                                                      
-  name, birthday,                                 -> CreateEmployeeEmailAccount -> [CreatedEmployeeEmailAccount]                                                                                      
-  phone, ...                                                                                                                                                        
-                                                                                                                                                 
-                                                [CreatedEmployeeEmailAccount]                                       [CreatedEmployeeEmailAccount]                                          
-                                                  erstelle Emailaccount                                               -> CreateEmployeeRedmineAccount -> [CreatedEmployeeRedmineAccount]                
-                                                  localpart@hicknha...com                                                    
-                                                                                                                    [CreatedEmployeeRedmineAccount]                    
-                                                                                                                      erstelle Redmine Account                       
-                                                                                                                      Job ergibt: redmine_id
-                                                                                                                      -> GetRedmineUserAccountId -> [GotRedmineUserAccountId]
-                                                                                                                                                        
-																												    [GotRedmineUserAccountId]
-																												       Verarbeitung nicht nötig,
-																												       aber vielleicht woanders?
+  attributes surname,                             surname, name
+  name, birthday,                                 -> CreateEmployeeEmailAccount -> [CreatedEmployeeEmailAccount]
+  phone, ...
+
+                                                [CreatedEmployeeEmailAccount]                                             [CreatedEmployeeEmailAccount]
+                                                  erstelle Emailaccount                                                     -> CreateEmployeeRedmineAccount -> [CreatedEmployeeRedmineAccount]
+                                                  für automatisch abgeleitete Emailadresse
+                                                                                                                          [CreatedEmployeeRedmineAccount]
+                                                                                                                            erstelle Redmine Account
+                                                                                                                            Job ergibt: redmine_id
+                                                                                                                            -> GetRedmineUserAccountId -> [GotRedmineUserAccountId]
+
+														          [GotRedmineUserAccountId]
+														             Verarbeitung nicht nötig, oder besser doch statt
+														             User#redmine_id im after_job-Handler zu setzen?
 
 
-DismissEmployee -> [DismissedEmployee]
+DismissEmployee -> [DismissedEmployee]          [DismissedEmployee]                                                       [DismissedEmployee]
+  attributes id                                   -> DeleteEmployeeEmailAccount -> [DeletedEmployeeEmailAccount]           -> DeleteEmployeeRedmineAccount -> [DeletedEmployeeRedmineAccount]
+                                                     surname, name                                                            redmine_id
+
+                                                [DeletedEmployeeEmailAccount]                                             [DeletedEmployeeEmailAccount]
+                                                  lösche Emailaccount für
+                                                  für automatisch abgeleitete Emailadresse
+
+
+
+AddClient -> [AddedClient]                      [AddedClient]                                                             [AddedClient]
+  attributes companyName, website, ...            -> CreateClientAdminEmailAccount -> [CreatedClientAdminEmailAccount]      -> AddRedmineClient -> [AddedRedmineClient]
+                                                     ...                                                                       redmine_client_id
+
+                                                [CreatedClientAdminEmailAccount]                                          [CreatedClientAdminEmailAccount]
+                                                  ...                                                                       ...
+
+
+
+AddClientEmployee -> [AddedClientEmployee]      [AddedClientEmployee]                                                     entsprechend [RecruitedEmployee]
+  attributes surname, name, email, phone, ...     surname, name
+                                                  -> CreateClientEmployeeEmailAccount
+                                                     -> [CreatedClientEmployeeEmailAccount]
+
+
+StartProject -> [StartedProject]                                                                                          [StartedProject]                                                         [StartedProject]
+  attributes name, clientId,                                                                                                -> StartRedmineProject -> [StartedRedmineProject]                        eigentlich pro Repo
+  createClientRedmine, sourceControl, ...
+                                                                                                                          [StartedRedmineProject]
+                                                                                                                            Project#redmine_id
+FinishProject -> [FinishedProject]
   attributes id
 
 
-
-add_customer
-  attributes companyName, website, ...
-
-
-add_customer_employee
-  attributes surname, name, email, phone, ...
-
-
-start_project
-  attributes name, clientId, createClientRedmine, sourceControl, ..
-
-
-finish_project
-  event :FinishedProject
-  attributes id
-
-
-assign_employees_to_project
-  event :AssignedEmployeesToProject
+AssignEmployeesToProject                                                                                                  [AssignedEmployeesToProject]
+  -> [AssignedEmployeesToProject]
   attributes projectId, employeeIds[]
-assign_employee_to_projects
-  event :AssignedEmployeeToProjects
+
+
+AssignProjectsToEmployee                                                                                                  [AssignedProjectsToEmployee]
+  -> [AssignedProjectsToEmployee]
   attributes projectIds[], employeeId

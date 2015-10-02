@@ -1,0 +1,49 @@
+plugin_instances
+---
+- id: 47
+  name: Alte Kiste
+  host: alte_kiste.vhosts.hackyourself.com
+  plugin: dovecot
+  active: no
+
+- id: 69
+  name: Altes Haupt-Redmine
+  host: redmine.vhosts.hackyourself.com
+  plugin: redmine
+  active: no
+
+- id: 78
+  name: Nigelnagelneuer Emailserver
+  host: das_neueste.vhosts.hackyourself.com
+  plugin: dovecot
+  active: yes
+
+- id: 81
+  name: Kunden Redmine Top A Kunde
+  host: top_a_redmine.vhosts.hackyourself.com
+  plugin: redmine
+  active: yes
+
+- id: 85
+  name: Neues Haupt-Redmine
+  host: redmine.vhosts.hackyourself.com
+  plugin: redmine
+  active: yes
+
+
+plugin_instance_aliases
+---
+- id: 1
+  name: Alle aktiven Redmines
+  plugin: redmine
+  instances: [81, 85]
+
+- id: 2
+  name: Haupt-Redmine
+  plugin: redmine
+  instances: [85]
+
+- id: 3
+  name: Kunden Redmine Top A Kunde
+  plugin: redmine
+  instances: []

@@ -2,7 +2,7 @@
 
 Events
 ------
-id  event             refs                     data
+id  event             refchain                  data
 ---------------------------------------------------------------------------
 1   CreatedFiveUsers  []                       {users: [Erwin, Gudrun,...]}
 2   CreatedUser       [[1, CreatedFiveUsers]]  {user: Erwin,...}
@@ -24,12 +24,12 @@ id saga               data
 
 Index
 -----
-ref saga_id  type
+event_id saga_id  type
 -------------------------------
-1   1        MultiUsercreation
-2   2        SingleUsercreation
+1        1        MultiUsercreation
+2        2        SingleUsercreation
 ...
-___________________________
+______________________________________________________________________________________________________________________________
 
 class Cacas::Saga < ActiveRecord::Base
   ...
@@ -38,7 +38,7 @@ class Cacas::Saga < ActiveRecord::Base
       @create_on = events
     end
     def handle event
-      ref = event.refs.detect {|id, name| @create_on.include? name}
+      ref = event.refchain.detect {|id, name| @create_on.include? name}
       if ref
         inst = Index.where(ref: ref.first, type: self.name).saga
       elsif @create_on.include? event.name
@@ -50,15 +50,15 @@ class Cacas::Saga < ActiveRecord::Base
     end
   end
   def register_external_event name, refs
-    ExternalEvent.create event: name, refs: refs  # returned instance has a #get_link(additional_params) method
-  end                                             # which returns a link that creates the named event with the refs...
+    ExternalEvent.create event: name, refchain: refs  # returned instance has a #get_link(additional_params) method
+  end                                                 # which returns a link that creates the named event with the refs...
   def unregister_external_event ext_evt_hash
   ...
 end
 
 Events
 ------
-id  event                 refs                      data
+id  event                 refchain                  data
 ------------------------------------------------------------------------------------------------------
 1   AnnouncedTraining     []                        {participants: [one@two.com, two@one.com,...],
                                                      timers: {'2015-09-25T12:00:00': EndSubscription}}
@@ -77,10 +77,13 @@ id  saga               data
 
 Index
 -----
-ref  saga_id   type
+event_id  saga_id   type
 --------------------------------
-1    1         OrganizeTraining
-2    1         OrganizeTraining   - hier wurde one@two.com dem confirmed-array hinzugefügt
-3    1         OrganizeTraining
+1         1         OrganizeTraining
+2         1         OrganizeTraining   - hier wurde one@two.com dem confirmed-array hinzugefügt
+3         1         OrganizeTraining
 ...
-5    1         OrganizeTraining
+5         1         OrganizeTraining
+_________________________________________________________________________________________________________________________________
+
+SagaIndex

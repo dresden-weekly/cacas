@@ -1,0 +1,20 @@
+
+saga_index
+----------
+event_id  primary_event_id*  event_name*          saga_id  saga_name*         instance_id
+------------------------------------------------------------------------------------------
+
+
+
+dovecot_instances
+-----------------
+id   description
+---------------------------------------
+1    old server
+2    new server
+
+
+
+events
+------
+id

@@ -1,0 +1,91 @@
+Plan A
+======
+
+events
+------
+id  name                     data
+-------------------------------------------------------------------------------------
+1   AssignedProjectsToUser   {user: {name: Ivan, surname: Esteban}, projects: ['Fratzenbuch 2', 'Zwitscher, die 27.', ...]}
+
+
+users_projects
+--------------
+user_name    user_surname   project_name
+--------------------------------------------
+Ivan         Esteban        'Fratzenbuch 2'
+Ivan         Esteban        'Zwitscher, die 27.'
+...
+
+____________________________________________________________________________________
+
+Plan B
+======
+
+events
+------
+id  name                     data
+-------------------------------------------------------------------------------------
+1   AssignedProjectsToUser   {user: 6b1fa4b0-428a-0133-1c32-3065ec4b816a, projects: [9addbe10-428a-0133-1c33-3065ec4b816a, a98e7540-428a-0133-1c34-3065ec4b816a, ...]}
+
+
+users_projects
+--------------
+user_id                               project_id
+--------------------------------------------------------------------------
+6b1fa4b0-428a-0133-1c32-3065ec4b816a  9addbe10-428a-0133-1c33-3065ec4b816a
+6b1fa4b0-428a-0133-1c32-3065ec4b816a  a98e7540-428a-0133-1c34-3065ec4b816a
+...
+
+___________________________________________________________________________________
+
+Plan C        (zusammengesetzte Primärschlüssel aus Event-Id und fortlaufender Nummer)
+======
+
+events
+------
+id  name                     data
+-------------------------------------------------------------------------------------
+1   AssignedProjectsToUser   {user: 213-1, projects: [654-1, 657-1, ...]}
+
+
+users                   (PRIMARY KEY(evid, entid))
+-----
+evid  entid ...
+----------------
+213   1
+
+
+users_projects
+--------------
+user_evid  user_entid  project_evid  project_entid
+--------------------------------------------------
+213        1           654           1
+213        1           657           1
+...
+
+__________________________________________________________________________________
+
+Plan C'             (einfache Primärschlüssel)
+=======
+
+events
+------
+id  name                     data
+--------------------------------------------------------------------------
+1   AssignedProjectsToUser   {user: 213-1, projects: [654-1, 657-1, ...]}
+
+
+users
+-----
+id evid  entid ...
+----------------
+1  213   1
+
+
+users_projects
+--------------
+user_id  project_id
+-------------------
+1        783
+1        982
+...

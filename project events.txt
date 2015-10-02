@@ -1,0 +1,70 @@
+# -*-YAML-*-
+
+events
+---
+
+- id: 1
+  event: CreateCompany
+  data:
+    name: HicknHack
+
+- id: 4
+  event: RecruitedEmployee
+  data:
+    name: Erika
+    surname: Fiedler
+    companies: ['1-1']
+    projects: ['3-1']
+
+- id: 5
+  event: CreatedEmployeeEmailAddress
+  data:
+    employee: '4-1'
+    company: '1-1'
+    address: erika.fiedler@hackyourself.com
+
+- id: 25
+  event: AddedRedmineServerInstance
+  data:
+    ip: 192.168.0.56
+
+- id: 29
+  event: AssociatedCompanyRedmineServer
+  data:
+    company: '1-1'
+    server: '25-1'
+
+- id: 30
+  event: UpdatedEmployee
+  data:
+    employee: '4-1'
+    name: Erica
+    surname: Feeder
+    companies: ['1-1']
+
+- id: 32
+  event: CreatedEmployeeRedmineAccount
+  data:
+    server: '25-1'
+    employee: '4-1'
+    email: '5-1'
+
+- id: 37
+  event: GotRedmineUserAccountId     # Ergebnis v. Command in CreatedEmployeeRedmineAccount#after_job
+  data:
+    server: '25-1'
+    employee: '4-1'
+    id: 10
+
+- id: 50
+  event: StartedProject
+  data:
+    name: FratzenBacke
+    company: '1-1'
+    server: '25-1'
+
+- id: 53
+  event: AssignedEmployeesToProject
+  data:
+    employees: ['4-1']
+    project: '50-1'

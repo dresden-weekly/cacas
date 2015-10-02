@@ -1,12 +1,12 @@
 class Cacas::Saga < ActiveRecord::Base
-  self.abstract_class = true
+  # self.abstract_class = true
 
   attr_reader :event_handlers
 
   class << self
 
     def inherited(sub)
-      # sub.instance_variable_set :@finders, {}
+      sub.instance_variable_set :@create_on, {}
       sub.instance_variable_set :@event_handlers, {}
       sub.instance_variable_set :@after_job_handlers, {}
     end
