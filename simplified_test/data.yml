@@ -26,96 +26,96 @@
     projects:
     - 3-1
 
-- id: 5
-  event: CreatedEmployeeEmailAddress
-  data:
-    employee: 4-1
-    companies:
-    - 1-1
-    address: erika.fiedler@hackyourself.com
+# - id: 5
+#   event: CreatedEmployeeEmailAddress
+#   data:
+#     employee: 4-1
+#     companies:
+#     - 1-1
+#     address: erika.fiedler@hackyourself.com
 
-- id: 6
-  event: AddedEmailAddressToServer
-  data:
-    email: 5-1
-    server: 2-1
-    path: "/vmail/erika.fiedler@hackyourself.com/"
-    id: '11'
+# - id: 6
+#   event: AddedEmailAddressToServer
+#   data:
+#     email: 5-1
+#     server: 2-1
+#     path: "/vmail/erika.fiedler@hackyourself.com/"
+#     id: '11'
 
-- id: 8
-  event: AddedEmailServerInstance
-  data:
-    ip: 192.168.0.55
+# - id: 8
+#   event: AddedEmailServerInstance
+#   data:
+#     ip: 192.168.0.55
 
-- id: 9
-  event: AssociatedCompanyEmailServer
-  data:
-    company: 1-1
-    email_server: 8-1
+# - id: 9
+#   event: AssociatedCompanyEmailServer
+#   data:
+#     company: 1-1
+#     email_server: 8-1
 
-- id: 10
-  event: UpdatedEmployee
-  data:
-    employee: 4-1
-    name: Erica
+# - id: 10
+#   event: UpdatedEmployee
+#   data:
+#     employee: 4-1
+#     name: Erica
 
-- id: 11
-  event: CreatedProject
-  data:
-    name: Zwitscher Zwitscher
-    company: 1-1
+# - id: 11
+#   event: CreatedProject
+#   data:
+#     name: Zwitscher Zwitscher
+#     company: 1-1
 
-- id: 20
-  event: AddedProjectsToEmployee
-  data:
-    employee: 4-1
-    projects:
-    - 11-1
+# - id: 20
+#   event: AddedProjectsToEmployee
+#   data:
+#     employee: 4-1
+#     projects:
+#     - 11-1
 
-- id: 25
-  event: AddedRedmineServerInstance
-  data:
-    ip: 192.168.0.56
+# - id: 25
+#   event: AddedRedmineServerInstance
+#   data:
+#     ip: 192.168.0.56
 
-- id: 29
-  event: AssociatedCompanyRedmineServer
-  data:
-    company: 1-1
-    server: 25-1
+# - id: 29
+#   event: AssociatedCompanyRedmineServer
+#   data:
+#     company: 1-1
+#     server: 25-1
 
-- id: 30
-  event: UpdatedEmployee
-  data:
-    employee: 4-1
-    name: Erica
-    surname: Feeder
-    companies:
-    - 1-1
+# - id: 30
+#   event: UpdatedEmployee
+#   data:
+#     employee: 4-1
+#     name: Erica
+#     surname: Feeder
+#     companies:
+#     - 1-1
 
-- id: 32
-  event: CreatedEmployeeRedmineAccount
-  data:
-    server: 25-1
-    employee: 4-1
-    email: 5-1
+# - id: 32
+#   event: CreatedEmployeeRedmineAccount
+#   data:
+#     server: 25-1
+#     employee: 4-1
+#     email: 5-1
 
-- id: 37
-  event: GotRedmineUserAccountId
-  data:
-    server: 25-1
-    employee: 4-1
-    id: 10
+# - id: 37
+#   event: GotRedmineUserAccountId
+#   data:
+#     server: 25-1
+#     employee: 4-1
+#     id: 10
 
-- id: 50
-  event: StartedProject
-  data:
-    name: FratzenBacke
-    company: 1-1
-    server: 25-1
+# - id: 50
+#   event: StartedProject
+#   data:
+#     name: FratzenBacke
+#     company: 1-1
+#     server: 25-1
 
-- id: 53
-  event: AssignedEmployeesToProject
-  data:
-    employees:
-    - 4-1
-    project: 50-1
+# - id: 53
+#   event: AssignedEmployeesToProject
+#   data:
+#     employees:
+#     - 4-1
+#     project: 50-1

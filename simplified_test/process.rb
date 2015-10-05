@@ -20,6 +20,12 @@ class Event
     end
 
     def where conds
+      if conds.has_key? 'event'
+        events = @@events.select {|e| e['event'] == conds['event'].to_s}
+        conds.delete 'event'
+      else
+        events = @@events
+      end
       @@events.select do |e|
         conds.reduce(true) do |r,cond|
           r && e['data'][cond[0].to_s] == cond[1]
@@ -50,13 +56,25 @@ class Event
   end
 end
 
+class Hash
+  def id             # should  never be done in RL
+    self['id']
+  end
+  def event
+    self['event']
+  end
+  def method_missing name
+    self['data'][name.to_s]
+  end
+end
+
 class Plugin
   class << self
     def inherited(sub)
-      sub.instance_variable_set :@create_on, {}
       sub.instance_variable_set :@commands, {}
       sub.instance_variable_set :@event_handlers, {}
       sub.instance_variable_set :@after_job_handlers, {}
+      sub.instance_variable_set :@event_definitions, {}
     end
 
     def handle name, &block
@@ -84,8 +102,9 @@ class Plugin
     end
 
     def process event
-      event_name = event['event'].to_sym
+      event_name = event.event.to_sym
       _process event_name, event if @event_handlers.include? event_name
+      _process2 event_name, event if @event_definitions.include? event_name
     end
 
     def _process event_name, event
@@ -94,8 +113,38 @@ class Plugin
       # inst.save if success
     end
 
+    def _process2  event_name, event
+      definitions = @event_definitions[event_name]
+      # p _recorded? event_name, event, definitions
+      return if _recorded? event_name, event, definitions
+      context = definitions[:handler_context_class].new(self, definitions[:attribute_mapping].map do |k,v|
+        event.send k
+      end)
+      context.instance_exec &definitions[:handler]
+    end
+
+    def _recorded? event_name, event, definitions
+      rb_def = definitions[:recorded_by]
+      attribs = rb_def[1].map do |curr, rec|
+        rec_val = if curr.instance_of? Proc
+                    curr.call event
+                  else  # expecting symbol
+                    event.send curr
+                  end
+        [rec, rec_val]
+      end.to_h
+      Event.where(attribs.merge('event' => rb_def.first)).first
+    end
+
     def handler_context
       @handler_context ||= HandlerContext.new self
+    end
+
+    #####################################
+    def define event_name, &block
+      dc = DefineContext.new
+      dc.instance_exec &block
+      @event_definitions[event_name] = dc.data
     end
   end
 end
@@ -103,12 +152,12 @@ end
 class HandlerContext
   # class << self
 
-  def initialize plugin_context
+  def initialize plugin_context, *args
     @plugin_context = plugin_context
   end
   def create_job e, creds
     # JobQueue.create event: e.event, event_id: e.id, data: creds
-    puts "  should create job for event: #{e['event']}, event_id: #{e['id']}"
+    puts "  should create job for event: #{e.event}, event_id: #{e.id}"
   end
   def command name, data
     puts "  executing command: #{name}"
@@ -120,19 +169,65 @@ class HandlerContext
   # end
 end
 
+class DefineContext
+  attr_reader :data
+  def initialize # plugin_class #, event_name
+    # @plugin_class = plugin_class
+    # @event_name = event_name
+    @data = {recorded_by: {}}
+  end
+  def recorded_by event_name, atts
+    @data[:recorded_by] = [event_name, atts]
+  end
+  def provide attributes
+    attribute_mapping = if attributes.is_a? Array
+                          attributes.map {|i| [i,i]}.to_h
+                        else
+                          attributes
+                        end
+    @data[:attribute_mapping] = attribute_mapping
+    @data[:handler_context_class] = Class.new(HandlerContext) do |c|
+      @@atts = attribute_mapping.values
+      attr_reader *attribute_mapping.values
+      def initialize plugin_context, args
+        # p @@atts, args
+        @@atts.zip(args).each {|n,v| instance_variable_set "@#{n}", v}
+        super
+      end
+    end
+  end
+  def handle &block
+    @data[:handler] = block
+  end
+  def ceid
+    proc {|e| "#{e.id}-1"}
+  end
+end
 
 
 class DovecotPlugin < Plugin
 
-  handle :RecruitedEmployee do |e|
 
-    e['data']['companies'].each do |company|
-
-      command :CreateEmployeeEmailAddress, name: e['data']['name'],
-                                           surname: e['data']['surname'],
-                                           company: company
+  define :RecruitedEmployee do
+    recorded_by :CreatedEmployeeEmailAddress, ceid => :employee
+    provide [:name, :surname, :companies]
+    handle do
+      companies.each do |company|
+        command :CreateEmployeeEmailAddress, name: name,
+                                             surname: surname,
+                                             company: company
+      end
     end
   end
+
+  # handle :RecruitedEmployee do |e|
+  #   e.companies.each do |company|
+  #     command :CreateEmployeeEmailAddress, name: e.name,
+  #                                          surname: e.surname,
+  #                                          company: company
+  #   end
+  # end
+
 
   command :CreateEmployeeEmailAddress do |data|
     [:CreatedEmployeeEmailAddress, data]
@@ -141,11 +236,11 @@ class DovecotPlugin < Plugin
   handle :CreatedEmployeeEmailAddress do |e|
 
     Event.by_event('AssociatedCompanyEmailServer')
-      .select {|o| o['data']['company'] == e['data']['company']}
+      .select {|o| o.company == e.company}
       .each do |o|
-        command :AddEmailAddressToServer, server: e['data']['server'],
+        command :AddEmailAddressToServer, server: e.server,
                                           email: "#{o.id}-1",
-                                          address: e['data']['address']
+                                          address: e.address
       end
   end
 
@@ -153,28 +248,29 @@ class DovecotPlugin < Plugin
     [:AddedEmailAddressToServer, data]
   end
 
+
   handle :AddedEmailAddressToServer do |e|
 
-    ip = Event.find_by_ceid(e['data']['server'])['data']['ip']
-    address = Event.find_by_ceid(e['data']['email'])['data']['address']
+    ip = Event.find_by_ceid(e.server).ip
+    address = Event.find_by_ceid(e.email).address
 
-    create_job e, ip: ip, address: address, path: e['data']['path']
+    create_job e, ip: ip, address: address, path: e.path
 
   end
 
   handle :AddedEmailServerInstance do |e|
 
-    create_job e, ip: e['data']['ip']
+    create_job e, ip: e.ip
 
   end
 
   handle :AssociatedCompanyEmailServer do |e|
 
     Event.by_event('CreatedEmployeeEmailAddress')
-      .select {|o| o['data']['company'] == e['data']['company']}
+      .select {|o| o.company == e.company}
       .each do |o|
-        command :AddEmailAddressToServer, server: e['data']['server'],
-                                          email: "#{o['id']}-1"
+        command :AddEmailAddressToServer, server: e.server,
+                                          email: "#{o.id}-1"
       end
   end
 end
@@ -184,10 +280,10 @@ class RedminePlugin < Plugin
 
   handle :CreatedEmployeeRedmineAccount do |e|
 
-    name      = Event.find_by_ceid(e['data']['employee'])['data']['name']
-    surname   = Event.find_by_ceid(e['data']['employee'])['data']['surname']
-    email     = Event.find_by_ceid(e['data']['email'])['data']['address']
-    ip        = Event.find_by_ceid(e['data']['server'])['data']['ip']
+    name      = Event.find_by_ceid(e.employee).name
+    surname   = Event.find_by_ceid(e.employee).surname
+    email     = Event.find_by_ceid(e.email).address
+    ip        = Event.find_by_ceid(e.server).ip
     create_job e, name: name,
                   surname: surname,
                   # login: oh_lord_gimme_a_login(),
@@ -201,7 +297,7 @@ puts "Event.count: #{Event.count}"
 
 Event.all.each do |e|
 
-  puts "id: #{e['id']}, event: #{e['event']}"
+  puts "id: #{e.id}, event: #{e.event}"
 
   [DovecotPlugin, RedminePlugin].each do |pl|
     pl.process e
