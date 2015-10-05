@@ -11,6 +11,10 @@ class Event
 
   class << self
 
+    def all
+      @@events
+    end
+
     def find id
       @@events.find {|e| e['id'] == id}
     end
@@ -40,6 +44,9 @@ class Event
     def save
       File.write @@filename, YAML::dump(@@events).gsub(/\n-/, "\n\n-")
     end
+    def count
+      @@events.size
+    end
   end
 end
 
@@ -68,26 +75,49 @@ class Plugin
       @event_handlers.include? event_name
     end
 
-    def execute name, data
-      @commands[name].call data
+    def execute command_name, data
+      populate *@commands[command_name].call(data)
+    end
+
+    def populate event_name, data
+      Event << {'event' => event_name.to_s, 'data' => data}
     end
 
     def process event
+      event_name = event['event'].to_sym
+      _process event_name, event if @event_handlers.include? event_name
+    end
+
+    def _process event_name, event
       # inst = find_or_create event
-      success = HandlerContext.module_exec(event, &@event_handlers[event.sym_name])
-      inst.save if success
+      success = handler_context.instance_exec(event, &@event_handlers[event_name])
+      # inst.save if success
+    end
+
+    def handler_context
+      @handler_context ||= HandlerContext.new self
     end
   end
 end
 
-module HandlerContext
+class HandlerContext
+  # class << self
+
+  def initialize plugin_context
+    @plugin_context = plugin_context
+  end
   def create_job e, creds
     # JobQueue.create event: e.event, event_id: e.id, data: creds
-    puts "should create job for event: #{e.event}, event_id: #{e.id}"
+    puts "  should create job for event: #{e['event']}, event_id: #{e['id']}"
   end
   def command name, data
+    puts "  executing command: #{name}"
     plugin_context.execute name, data
   end
+  def plugin_context
+    @plugin_context
+  end
+  # end
 end
 
 
@@ -96,53 +126,55 @@ class DovecotPlugin < Plugin
 
   handle :RecruitedEmployee do |e|
 
-    e.data['companies'].each do |company|
+    e['data']['companies'].each do |company|
 
-      command :CreateEmployeeEmailAddress, name: e.data['name'],
-                                           surname: e.data['surname'],
+      command :CreateEmployeeEmailAddress, name: e['data']['name'],
+                                           surname: e['data']['surname'],
                                            company: company
     end
   end
 
   command :CreateEmployeeEmailAddress do |data|
+    [:CreatedEmployeeEmailAddress, data]
   end
 
   handle :CreatedEmployeeEmailAddress do |e|
 
     Event.by_event('AssociatedCompanyEmailServer')
-      .select {|o| o.data['companies'].include? e.data['company']}
+      .select {|o| o['data']['company'] == e['data']['company']}
       .each do |o|
-        command :AddEmailAddressToServer, server: e.data['server'],
+        command :AddEmailAddressToServer, server: e['data']['server'],
                                           email: "#{o.id}-1",
-                                          address: e.data['address']
+                                          address: e['data']['address']
       end
   end
 
   command :AddEmailAddressToServer do |data|
+    [:AddedEmailAddressToServer, data]
   end
 
   handle :AddedEmailAddressToServer do |e|
 
-    ip = Event.find_by_ceid(e.data['server']).data['ip']
-    address = Event.find_by_ceid(e.data['email']).data['address']
+    ip = Event.find_by_ceid(e['data']['server'])['data']['ip']
+    address = Event.find_by_ceid(e['data']['email'])['data']['address']
 
-    create_job e, ip: ip, address: address, path: e.data['path']
+    create_job e, ip: ip, address: address, path: e['data']['path']
 
   end
 
   handle :AddedEmailServerInstance do |e|
 
-    create_job e, ip: e.data['ip']
+    create_job e, ip: e['data']['ip']
 
   end
 
   handle :AssociatedCompanyEmailServer do |e|
 
     Event.by_event('CreatedEmployeeEmailAddress')
-      .select {|o| o.data['company'] == e.data['company']}
+      .select {|o| o['data']['company'] == e['data']['company']}
       .each do |o|
-        command :AddEmailAddressToServer, server: e.data['server'],
-                                          email: "#{o.id}-1"
+        command :AddEmailAddressToServer, server: e['data']['server'],
+                                          email: "#{o['id']}-1"
       end
   end
 end
@@ -152,20 +184,35 @@ class RedminePlugin < Plugin
 
   handle :CreatedEmployeeRedmineAccount do |e|
 
-    name      = Event.find_by_ceid(e.data['employee']).data['name']
-    surname   = Event.find_by_ceid(e.data['employee']).data['surname']
-    email     = Event.find_by_ceid(e.data['email']).data['address']
-    ip        = Event.find_by_ceid(e.data['server']).data['ip']
+    name      = Event.find_by_ceid(e['data']['employee'])['data']['name']
+    surname   = Event.find_by_ceid(e['data']['employee'])['data']['surname']
+    email     = Event.find_by_ceid(e['data']['email'])['data']['address']
+    ip        = Event.find_by_ceid(e['data']['server'])['data']['ip']
     create_job e, name: name,
                   surname: surname,
-                  login: oh_lord_gimme_a_login(),
-                  password: oh_lord_gimme_a_password(),
+                  # login: oh_lord_gimme_a_login(),
+                  # password: oh_lord_gimme_a_password(),
                   email: email
   end
 end
 
-Event << {'event' => 'Dings', 'data' => {'email' => '5-1', 'server' => '2-1'}}
 
-p Event.where email: '5-1', server: '2-1'
+puts "Event.count: #{Event.count}"
+
+Event.all.each do |e|
+
+  puts "id: #{e['id']}, event: #{e['event']}"
+
+  [DovecotPlugin, RedminePlugin].each do |pl|
+    pl.process e
+  end
+end
+
+puts "Event.count: #{Event.count}"
+
+
+# Event << {'event' => 'Dings', 'data' => {'email' => '5-1', 'server' => '2-1'}}
+
+# p Event.where email: '5-1', server: '2-1'
 
 # Event.save

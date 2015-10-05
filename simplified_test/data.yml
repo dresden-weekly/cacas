@@ -1,7 +1,7 @@
 ---
 
 - id: 1
-  event: CreateCompany
+  event: CreatedCompany
   data:
     name: HicknHack
 
@@ -30,7 +30,8 @@
   event: CreatedEmployeeEmailAddress
   data:
     employee: 4-1
-    company: 1-1
+    companies:
+    - 1-1
     address: erika.fiedler@hackyourself.com
 
 - id: 6
