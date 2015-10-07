@@ -2,11 +2,12 @@
 # coding: utf-8
 
 require 'yaml'
+require 'active_support/core_ext/hash/indifferent_access'
 
 class Event
 
   @@filename = 'data.yml'
-  @@events = YAML::load_file @@filename
+  @@events = YAML::load_file(@@filename).map {|h| ActiveSupport::HashWithIndifferentAccess.new(h)}
   @@last_id = @@events[-1]['id']
 
   class << self
@@ -48,7 +49,13 @@ class Event
     end
 
     def save
-      File.write @@filename, YAML::dump(@@events).gsub(/\n-/, "\n\n-")
+      File.write @@filename, to_yaml
+    end
+    def dump
+      puts to_yaml
+    end
+    def to_yaml
+      YAML::dump(@@events.map(&:deep_stringify_keys).map(&:to_hash)).gsub(/\n-/, "\n\n-")
     end
     def count
       @@events.size
@@ -57,14 +64,14 @@ class Event
 end
 
 class Hash
-  def id             # should  never be done in RL
+  def eid
     self['id']
   end
   def event
     self['event']
   end
   def method_missing name
-    self['data'][name.to_s]
+    self['data'][name.to_s] if self.has_key?('data') && self['data'].has_key?(name.to_s)
   end
 end
 
@@ -120,7 +127,8 @@ class Plugin
       context = definitions[:handler_context_class].new(self, definitions[:attribute_mapping].map do |k,v|
         event.send k
       end)
-      context.instance_exec &definitions[:handler]
+      context.instance_exec event, &definitions[:handler]
+      _record_it event, definitions if definitions[:record_it_with]
     end
 
     def _recorded? event_name, event, definitions
@@ -134,6 +142,23 @@ class Plugin
         [rec, rec_val]
       end.to_h
       Event.where(attribs.merge('event' => rb_def.first)).first
+    end
+
+    def _record_it event, definitions
+      event_name, mapping = definitions[:recorded_by]
+      atts = _event_attrib_mapping event, mapping
+      Event << ActiveSupport::HashWithIndifferentAccess.new(event: event_name.to_s, data:  atts)
+    end
+
+    def _event_attrib_mapping event, mapping
+      mapping.map do |event_key, new_key|
+        rec_val = if event_key.instance_of? Proc
+                    event_key.call event
+                  else                      # expecting symbol
+                    event.send event_key
+                  end
+        [new_key, rec_val]
+      end.to_h
     end
 
     def handler_context
@@ -157,7 +182,7 @@ class HandlerContext
   end
   def create_job e, creds
     # JobQueue.create event: e.event, event_id: e.id, data: creds
-    puts "  should create job for event: #{e.event}, event_id: #{e.id}"
+    puts "  should create job for event: #{e.event}, event_id: #{e.eid}"
   end
   def command name, data
     puts "  executing command: #{name}"
@@ -165,6 +190,9 @@ class HandlerContext
   end
   def plugin_context
     @plugin_context
+  end
+  def ceid e
+    "#{e.eid}-1"
   end
   # end
 end
@@ -177,7 +205,12 @@ class DefineContext
     @data = {recorded_by: {}}
   end
   def recorded_by event_name, atts
+    # @data[:recorded_by][event_name] = atts
     @data[:recorded_by] = [event_name, atts]
+  end
+  def record_it_with event_name, atts
+    @data[:recorded_by] = [event_name, atts]
+    @data[:record_it_with] = true
   end
   def provide attributes
     attribute_mapping = if attributes.is_a? Array
@@ -200,7 +233,7 @@ class DefineContext
     @data[:handler] = block
   end
   def ceid
-    proc {|e| "#{e.id}-1"}
+    proc {|e| "#{e.eid}-1"}
   end
 end
 
@@ -208,14 +241,24 @@ end
 class DovecotPlugin < Plugin
 
 
+  define :AddedEmailServerInstance do
+    record_it_with :AddedEmailServerInstanceRec, :eid => :event_id
+    provide [:ip, :domain]
+    handle do |e|
+      create_job e, ip: ip, domain: domain
+    end
+  end
+
+
   define :RecruitedEmployee do
-    recorded_by :CreatedEmployeeEmailAddress, ceid => :employee
-    provide [:name, :surname, :companies]
-    handle do
+    recorded_by :CreatedEmployeeEmailAddress, :eid => :employee
+    provide [:eid, :name, :surname, :companies]
+    handle do |e|
       companies.each do |company|
         command :CreateEmployeeEmailAddress, name: name,
                                              surname: surname,
-                                             company: company
+                                             company: company,
+                                             employee: eid
       end
     end
   end
@@ -230,7 +273,8 @@ class DovecotPlugin < Plugin
 
 
   command :CreateEmployeeEmailAddress do |data|
-    [:CreatedEmployeeEmailAddress, data]
+    data['address'] = "#{data[:name].downcase}.#{data[:surname].downcase}@hitchnhike.com"
+    [:CreatedEmployeeEmailAddress, data.reject {|k,v| [:name, :surname].include? k}]
   end
 
   handle :CreatedEmployeeEmailAddress do |e|
@@ -239,7 +283,7 @@ class DovecotPlugin < Plugin
       .select {|o| o.company == e.company}
       .each do |o|
         command :AddEmailAddressToServer, server: e.server,
-                                          email: "#{o.id}-1",
+                                          email: o.eid,
                                           address: e.address
       end
   end
@@ -258,11 +302,11 @@ class DovecotPlugin < Plugin
 
   end
 
-  handle :AddedEmailServerInstance do |e|
+  # handle :AddedEmailServerInstance do |e|
 
-    create_job e, ip: e.ip
+  #   create_job e, ip: e.ip
 
-  end
+  # end
 
   handle :AssociatedCompanyEmailServer do |e|
 
@@ -270,7 +314,7 @@ class DovecotPlugin < Plugin
       .select {|o| o.company == e.company}
       .each do |o|
         command :AddEmailAddressToServer, server: e.server,
-                                          email: "#{o.id}-1"
+                                          email: "#{o.eid}-1"
       end
   end
 end
@@ -297,7 +341,7 @@ puts "Event.count: #{Event.count}"
 
 Event.all.each do |e|
 
-  puts "id: #{e.id}, event: #{e.event}"
+  puts "id: #{e.eid}, event: #{e.event}"
 
   [DovecotPlugin, RedminePlugin].each do |pl|
     pl.process e
@@ -311,4 +355,4 @@ puts "Event.count: #{Event.count}"
 
 # p Event.where email: '5-1', server: '2-1'
 
-# Event.save
+Event.dump

@@ -63,8 +63,8 @@ end
 class AddEmailAddressToServer # saga
 
   acts_as_saga do |saga|
-    server = saga.trigger :AssociatedCompanyEmailServer
-    address = saga.trigger :CreatedEmployeeEmailAddress
+    server = saga.handles :AssociatedCompanyEmailServer
+    address = saga.handles :CreatedEmployeeEmailAddress
     saga.where(server.company == address.company)
     result = saga.result :AddedEmailAddressToServer do |instance|
       job.create new ... do |response|

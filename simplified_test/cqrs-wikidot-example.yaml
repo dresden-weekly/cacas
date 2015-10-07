@@ -18,7 +18,7 @@
   event: GrabbedALunch
   data:
     amount: -8
-    cost: ?
+    cost: "?"
     time: 5 p.m.
     menu: alacarte
     place: "Luigi's"

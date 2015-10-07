@@ -73,3 +73,7 @@ Sekundär-Event, dessen Daten dazu dienen, die Ausführung eines Handlers im Kon
 Das *past-tense*-Problem
 ------------------------
 Die übliche Verwendung der past-tense Zeitform für Events führt immer wieder zu Konfusion. Z.B. das CreatedEmployeeRedmineAccount-Event tritt auf *bevor* der Account angelegt wird. Eventuell könnte man das durch zusätzliche Verwendung des *present-perfect* vermeiden. Also statt `present-tense -> past-tense`, (z.B. `CreateEmployeeRedmineAccount -> CreatedEmployeeRedmineAccount`) `present-tense -> present-perfect -> past-tense`, z.B. `CreateEmployeeRedmineAccount -> HaveCreatedEmployeeRedmineAccount -> CreatedEmployeeRedmineAccount`.
+
+
+Erfordernisse, die sich aus dem radikalen Event-Sourcing Ansatz ergeben
+=======================================================================
