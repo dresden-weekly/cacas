@@ -18,6 +18,24 @@
     email_server: 2
 
 - id: 4
+  event: AddedRedmineServerInstance
+  data:
+    ip: 192.168.0.56
+
+- id: 5
+  event: AssociatedCompanyRedmineServer
+  data:
+    company: 1
+    server: 4
+
+- id: 6
+  event: CreatedProject
+  data:
+    name: Hub Git
+    company: 1
+    server: 4
+
+- id: 7
   event: RecruitedEmployee
   data:
     name: Erika
@@ -25,97 +43,88 @@
     companies:
     - 1
     projects:
-    - 3
+    - 6
 
-# - id: 5
-#   event: CreatedEmployeeEmailAddress
-#   data:
-#     employee: 4
-#     server: 2
-#     address: erika.fiedler@hackyourself.com
+- id: 8
+  event: CreatedEmployeeEmailAddress
+  data:
+    employee: 7
+    server: 2
+    address: erika.fiedler@hackyourself.com
 
-# - id: 6
-#   event: AddedEmailAddressToServer
-#   data:
-#     email: 5
-#     server: 2
-#     path: "/vmail/erika.fiedler@hackyourself.com/"
-#     id: '11'
+- id: 9
+  event: AddedEmailAddressToServer
+  data:
+    email: 8
+    server: 2
+    path: "/vmail/erika.fiedler@hackyourself.com/"
+    id: '11'
 
-# - id: 8
-#   event: AddedEmailServerInstance
-#   data:
-#     ip: 192.168.0.55
+- id: 10
+  event: RecruitedEmployee
+  data:
+    name: Erich
+    surname: Honeymoon
+    companies:
+    - 1
+    projects:
+    - 6
 
-# - id: 9
-#   event: AssociatedCompanyEmailServer
-#   data:
-#     company: 1
-#     email_server: 8
+- id: 11
+  event: AddedEmailServerInstance
+  data:
+    ip: 192.168.0.55
 
-# - id: 10
-#   event: UpdatedEmployee
-#   data:
-#     employee: 4
-#     name: Erica
+- id: 12
+  event: AssociatedCompanyEmailServer
+  data:
+    company: 1
+    email_server: 11
 
-# - id: 11
-#   event: CreatedProject
-#   data:
-#     name: Zwitscher Zwitscher
-#     company: 1
+- id: 13
+  event: CreatedEmployeeRedmineAccount
+  data:
+    server: 4
+    employee: 7
+    email: 8
 
-# - id: 20
-#   event: AddedProjectsToEmployee
-#   data:
-#     employee: 4
-#     projects:
-#     - 11
+- id: 14
+  event: GotRedmineUserAccountId
+  data:
+    server: 4
+    employee: 7
+    id:
 
-# - id: 25
-#   event: AddedRedmineServerInstance
-#   data:
-#     ip: 192.168.0.56
+- id: 15
+  event: CreatedProject
+  data:
+    name: Zwitscher Zwitscher
+    company: 1
 
-# - id: 29
-#   event: AssociatedCompanyRedmineServer
-#   data:
-#     company: 1
-#     server: 25
+- id: 16
+  event: AddedProjectsToEmployee
+  data:
+    employee: 7
+    projects:
+    - 15
 
-# - id: 30
-#   event: UpdatedEmployee
-#   data:
-#     employee: 4
-#     name: Erica
-#     surname: Feeder
-#     companies:
-#     - 1
+- id: 17
+  event: UpdatedEmployee
+  data:
+    employee: 7
+    name: Erica
+    surname: Feeder
 
-# - id: 32
-#   event: CreatedEmployeeRedmineAccount
-#   data:
-#     server: 25
-#     employee: 4
-#     email: 5
+- id: 18
+  event: StartedProject
+  data:
+    name: FratzenBacke
+    company: 1
+    server: 4
 
-# - id: 37
-#   event: GotRedmineUserAccountId
-#   data:
-#     server: 25
-#     employee: 4
-#     id: 10
-
-# - id: 50
-#   event: StartedProject
-#   data:
-#     name: FratzenBacke
-#     company: 1
-#     server: 25
-
-# - id: 53
-#   event: AssignedEmployeesToProject
-#   data:
-#     employees:
-#     - 4
-#     project: 50
+- id: 19
+  event: AssignedEmployeesToProject
+  data:
+    employees:
+    - 7
+    project: 18
