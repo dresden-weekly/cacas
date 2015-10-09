@@ -18,6 +18,7 @@ ActiveRecord::Schema.define do
     table.column :event_id, :integer
     table.column :key, :string
     table.column :value, :text
+    table.column :array_item, :boolean, default: false
   end
 end
 
@@ -27,7 +28,13 @@ class PropertyIndex < ActiveRecord::Base
 
   def self.add_event event
     event.data.each do |k,v|
-      create event: event.event, event_id: event.id, key: k, value: v
+      if v.instance_of? Array
+        v.each do |i|
+          create event: event.event, event_id: event.id, key: k, value: i, array_item: true
+        end
+      else
+        create event: event.event, event_id: event.id, key: k, value: v
+      end
     end
   end
 end
@@ -43,9 +50,10 @@ class Event < ActiveRecord::Base
 end
 
 
-PropertyMapper = Struct.new :event, :prop, :meth, :eprop
+PropertyMapper = Struct.new :event, :prop, :meth, :eprop, :id_origin, :identifier
 
 class Entity
+  attr_reader :id
   class << self
     attr_reader :identifiers, :origins
     def inherited desc
@@ -56,10 +64,16 @@ class Entity
     end
     def add_property_mapper event, prop, meth, eprop=nil
       @mappings[prop] ||= {}
-      @mappings[prop][event] = PropertyMapper.new(event, prop, meth, eprop || prop)
-      attr_accessor prop unless instance_methods(false).include? prop
+      @mappings[prop][event] = PropertyMapper.new(event,
+                                                  prop,
+                                                  meth,
+                                                  eprop || prop,
+                                                  origins.include?(event),
+                                                  identifiers[event])
+      attr_reader prop unless instance_methods(false).include? prop
     end
     def add_identifier event, prop
+      @mappings.each {|p,em| em[event].identifier = prop if em.has_key? event}
       @identifiers[event] = prop
     end
     def mappers_by_event props
@@ -92,6 +106,8 @@ class EventType
     def identifies entity_class, prop
       entity_class.add_identifier event_name, prop
     end
+    def associates *args
+    end
     def event_name
       self.name.split('::')[-1].to_sym
     end
@@ -118,6 +134,9 @@ class Employee < Entity
   finale DismissedEmployee: :employee, CompanyBankrupted: :employees
 end
 
+class EmployeeCompanies < Association
+end
+
 class EmailServer < Entity
   origin :AddedEmailServerInstance
 end
@@ -140,12 +159,20 @@ end
 class RecruitedEmployee < EventType
   contains Employee, :name, override
   contains Employee, :surname, override
+  contains Employee, :companies_ids, override, :companies
+  associates Employee, Company: :companies
 end
 
 class UpdatedEmployee < EventType
   identifies Employee, :employee
   contains Employee, :name, override
   contains Employee, :surname, override
+end
+
+class AssignedInterimStaff < EventType
+  identifies Employee, :employees
+  contains Employee, :companies_ids, append, :company
+  associates Employee: :employees, Company: :companies
 end
 
 class AddedEmailServerInstance < EventType
@@ -173,28 +200,43 @@ module EntityCollector
   IND_VAL = PropertyIndex.arel_table[:value]
   IND_NONE = PropertyIndex.arel_table[:id].eq(0)
 
-  def self.get entity_class, ids, *props
-    entities = ids.map {|id| [id, {}]}.to_h
-    p_maps = entity_class.mappers_by_event props
-    # arel_ev = p_maps.map {|e,m| AREL_EV.eq e}.reduce(AREL_NONE, &:or)
-    arel_ev = entity_class.identifiers.map do |e,p|
-      IND_EV.eq(e).and(IND_KEY.eq(p)).and(IND_VAL.in(ids))
-    end.reduce(IND_NONE, &:or)
-    arel_upds = AREL_ID.in PropertyIndex.select(:event_id).where(arel_ev).map(&:event_id)
+  def self.get e_class, ids, *props
+    ents = ids.map {|id| [id, {}]}.to_h
+    p_maps = e_class.mappers_by_event props
+    index_arels = e_class.identifiers
+                  .select {|e,p| p_maps.keys.include? e}
+                  .map {|e,p| IND_EV.eq(e).and(IND_KEY.eq(p)).and(IND_VAL.in(ids))}
+                  .reduce(IND_NONE, &:or)
+    arel_upds = AREL_ID.in PropertyIndex.select(:event_id).where(index_arels).map(&:event_id)
     arel_origs = AREL_ID.in ids
-    Event.where(arel_origs.or(arel_upds)).all.each do |ev|
-      id = if ids.include? ev.id
-             ev.id
-           else
-             ev.data[entity_class.identifiers[ev.event.to_sym].to_s]
-           end
+    Event.where(arel_origs.or(arel_upds)).order(:id).all.each do |ev|
       p_maps[ev.event.to_sym].each do |pm|
-        entities[id][pm.prop] = pm.meth.call(nil, ev.data[pm.eprop.to_s])
+        idents = _ids(e_class, ids, ev, pm)
+        idents.each do |id|
+          ents[id][pm.prop] = pm.meth.call(ents[id][pm.prop], ev.data[pm.eprop.to_s])
+        end
       end
     end
-    entities
+    _instantiate e_class, ents
   end
 
+  def self._instantiate e_class, ents
+    ents.map do |id, props|
+      ent = e_class.new
+      ent.instance_variable_set :@id, id
+      props.each {|k,v| ent.instance_variable_set "@#{k}", v}
+      ent
+    end
+  end
+
+  def self._ids e_class, ids, event, pm
+    if pm.id_origin
+      [ event.id ]
+    else
+      value = event.data[pm.identifier.to_s]
+      value.is_a?(Array) ? (ids & value) : [ value ]
+    end
+  end
 end
 
-p EntityCollector::get Employee, [7,10], :name, :surname
+p EntityCollector::get Employee, [7,12], :name, :surname, :companies_ids

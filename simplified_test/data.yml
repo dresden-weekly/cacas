@@ -46,21 +46,33 @@
     - 6
 
 - id: 8
+  event: AquiredCustomer
+  data:
+    name: PicknPack
+
+- id: 9
+  event: AssignedInterimStaff
+  data:
+    company: 8
+    employees:
+    - 7
+
+- id: 10
   event: CreatedEmployeeEmailAddress
   data:
     employee: 7
     server: 2
     address: erika.fiedler@hackyourself.com
 
-- id: 9
+- id: 11
   event: AddedEmailAddressToServer
   data:
-    email: 8
+    email: 10
     server: 2
     path: "/vmail/erika.fiedler@hackyourself.com/"
     id: '11'
 
-- id: 10
+- id: 12
   event: RecruitedEmployee
   data:
     name: Erich
@@ -70,61 +82,61 @@
     projects:
     - 6
 
-- id: 11
+- id: 13
   event: AddedEmailServerInstance
   data:
     ip: 192.168.0.55
 
-- id: 12
+- id: 14
   event: AssociatedCompanyEmailServer
   data:
     company: 1
-    email_server: 11
+    email_server: 13
 
-- id: 13
+- id: 15
   event: CreatedEmployeeRedmineAccount
   data:
     server: 4
     employee: 7
-    email: 8
+    email: 10
 
-- id: 14
+- id: 16
   event: GotRedmineUserAccountId
   data:
     server: 4
     employee: 7
-    id:
+    id: '11'
 
-- id: 15
+- id: 17
   event: CreatedProject
   data:
     name: Zwitscher Zwitscher
     company: 1
 
-- id: 16
+- id: 18
   event: AddedProjectsToEmployee
   data:
     employee: 7
     projects:
-    - 15
+    - 17
 
-- id: 17
+- id: 19
   event: UpdatedEmployee
   data:
     employee: 7
     name: Erica
     surname: Feeder
 
-- id: 18
+- id: 20
   event: StartedProject
   data:
     name: FratzenBacke
     company: 1
     server: 4
 
-- id: 19
+- id: 21
   event: AssignedEmployeesToProject
   data:
     employees:
     - 7
-    project: 18
+    project: 20
