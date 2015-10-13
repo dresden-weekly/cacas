@@ -125,7 +125,6 @@
   data:
     employee: 7
     name: Erica
-    surname: Feeder
 
 - id: 20
   event: StartedProject
@@ -135,8 +134,19 @@
     server: 4
 
 - id: 21
+  event: CompanyBankrupted
+  data:
+    company: 1
+
+- id: 22
   event: AssignedEmployeesToProject
   data:
     employees:
     - 7
     project: 20
+
+- id: 23
+  event: DismissedEmployee
+  data:
+    company: 1
+    employee: 7

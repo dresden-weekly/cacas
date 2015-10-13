@@ -5,7 +5,7 @@ require 'active_record'
 require 'active_support/inflector'
 require 'pp'
 
-DEBUG = [:sql]
+DEBUG = [] # [:sql :events, :pmaps]
 
 def dbg_msg type, msg
   puts msg if DEBUG.include? type
@@ -63,7 +63,7 @@ PropertyMapper = Struct.new :event, :prop, :meth, :eprop, :id_origin, :identifie
 class Entity
   attr_reader :id
   class << self
-    attr_reader :identifiers, :origins, :associations, :assoc_origins
+    attr_reader :identifiers, :origins, :associations, :assoc_origins, :finales
     def inherited desc
       desc.instance_variable_set :@mappings, {}
       desc.instance_variable_set :@associations, {}
@@ -104,7 +104,7 @@ class Entity
     def origin *events
       @origins += events
     end
-    def finale *events
+    def finale events
       events.each {|event, prop| @finales[event] = prop}
     end
     def plural_name
@@ -123,6 +123,10 @@ class EventType
     end
     def identifies entity_class, prop
       entity_class.add_identifier event_name, prop
+    end
+    def updates entity_class, identifier, prop, meth, eprop=nil
+      identifies entity_class, identifier
+      entity_class.add_property_mapper event_name, prop, meth, eprop
     end
     # def appends entity_class, prop
     # end
@@ -160,7 +164,7 @@ class EventType
     def override
       proc do |old, new|
         # puts "override #{old} with #{new}";
-        new
+        new || old
       end
     end
     def append
@@ -168,6 +172,12 @@ class EventType
         # puts "append #{new} to #{old}";
         old ||= []
         (old << new).flatten
+      end
+    end
+    def remove
+      proc do |old, item|
+        # puts "remove #{item.inspect} from #{old.inspect}";
+        old - [ item ].flatten
       end
     end
   end
@@ -190,7 +200,7 @@ module EntityCollector
     assocs.each_key {|k| props << "#{k}_ids".to_sym}
     ents = ids.map {|id| [id, {}]}.to_h
     p_maps = e_class.mappers_by_event props
-    # p "________________________________________", props, p_maps
+    dbg_msg :pmaps, ["________", props, p_maps]
     index_arels = e_class.identifiers
                   .select {|e,p| p_maps.keys.include? e}
                   .map {|e,p| IND_EV.eq(e).and(IND_KEY.eq(p)).and(IND_VAL.in(ids))}
@@ -200,7 +210,7 @@ module EntityCollector
     dbg_msg :sql, index_arels.to_sql
     dbg_msg :sql, arel_origs.or(arel_upds).to_sql
     Event.where(arel_origs.or(arel_upds)).order(:id).all.each do |ev|
-      # p ev
+      dbg_msg :events, ev.inspect
       p_maps[ev.event.to_sym].each do |pm|
         # puts "#{pm.prop} #{pm.eprop}"
         idents = _ids(e_class, ids, ev, pm)
@@ -216,16 +226,32 @@ module EntityCollector
       end
     end
     instances = _instantiate e_class, ents
-    puts "______________ get associations ___________________"
     assocs.each do |ass_name, propsies|
       ass_class = e_class.associations[ass_name]
+      combined_ids = instances.map {|inst| inst.send "#{ass_name}_ids"}.flatten
+      combined_results = get(ass_class, combined_ids, *propsies).map do |r_inst|
+        [ r_inst.id, r_inst ]
+      end.to_h
       instances.each do |inst|
         ass_ids = inst.send "#{ass_name}_ids"
         next unless ass_ids
-        inst.instance_variable_set("@#{ass_name}", get(ass_class, ass_ids, *propsies))
+        results = combined_results.select {|id,inst| ass_ids.include? id}.values
+        inst.instance_variable_set("@#{ass_name}", results)
       end
     end
     instances
+  end
+
+  def self.get_all e_class, *props
+    index_finaled = e_class.finales
+                    .map {|e,p| IND_EV.eq(e.to_s).and(IND_KEY.eq(p.to_s))}
+                    .reduce(IND_NONE, &:or)
+    dbg_msg :sql, index_finaled.to_sql
+    finaled = PropertyIndex.where(index_finaled).map {|e| e.value}
+    arel_existing = EV_EV.in(e_class.origins).and(EV_ID.not_in(finaled))
+    dbg_msg :sql, arel_existing.to_sql
+    existing = Event.where(arel_existing).map &:id
+    get e_class, existing, *props
   end
 
   def self._instantiate e_class, ents
@@ -254,7 +280,7 @@ end
 
 class Employee < Entity
   origin :RecruitedEmployee
-  finale DismissedEmployee: :employee, CompanyBankrupted: :employees
+  finale DismissedEmployee: :employee
 end
 
 class EmployeeCompanies < Association
@@ -283,13 +309,15 @@ class AquiredCustomer < EventType
   contains Company, :name, override
 end
 
+class CompanyBankrupted < EventType
+  updates Employee, :compan, :employees_ids, remove, :company
+end
+
 class RecruitedEmployee < EventType
   identifies Company, :companies
   contains Employee, :name, override
   contains Employee, :surname, override
-  # contains Employee, :companies_ids, override, :companies
   associates Employee, Company
-  # associates Company, Employee
 end
 
 class UpdatedEmployee < EventType
@@ -298,13 +326,17 @@ class UpdatedEmployee < EventType
   contains Employee, :surname, override
 end
 
+class DismissedEmployee < EventType  # probably better DismissedEmployees
+  identifies Employee, :employee
+  contains Employee, :companies_ids, remove, :company
+  # combines identifies and contains:
+  updates Company, :company, :employees_ids, remove, :employee
+end
+
 class AssignedInterimStaff < EventType
   identifies Employee, :employees
   identifies Company, :company
-  # contains Employee, :companies_ids, append, :company
-  # associates Employee, :company, Company
   associates Employee, Company
-  # associates Company, Employee
 end
 
 class AddedEmailServerInstance < EventType
@@ -320,8 +352,9 @@ class AssociatedCompanyEmailServer < EventType
   contains CompanyEmailServer, :email_server, append
 end
 
-# p Employee.instance_variable_get :@mappings
+# pp Employee.instance_variable_get :@mappings
 
 # p EntityCollector::get Employee, [7,12], :name, :surname, :companies_ids
-pp EntityCollector::get Employee, [7,12], :name, :surname, companies: [:name]
+# pp EntityCollector::get Employee, [7,12], :name, :surname, companies: [:name]
 pp EntityCollector::get Company, [1,8], :name, employees: [:name, :surname]
+# pp EntityCollector::get_all Company, :name, employees: [:name, :surname]
