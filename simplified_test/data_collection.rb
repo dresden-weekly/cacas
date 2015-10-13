@@ -5,8 +5,10 @@ require 'active_record'
 require 'active_support/inflector'
 require 'pp'
 
-def p *args
-  pp *args
+DEBUG = [:sql]
+
+def dbg_msg type, msg
+  puts msg if DEBUG.include? type
 end
 
 ActiveRecord::Base.establish_connection(
@@ -56,16 +58,17 @@ class Event < ActiveRecord::Base
 end
 
 
-PropertyMapper = Struct.new :event, :prop, :meth, :eprop, :id_origin, :identifier
+PropertyMapper = Struct.new :event, :prop, :meth, :eprop, :id_origin, :identifier, :id_association
 
 class Entity
   attr_reader :id
   class << self
-    attr_reader :identifiers, :origins, :associations
+    attr_reader :identifiers, :origins, :associations, :assoc_origins
     def inherited desc
       desc.instance_variable_set :@mappings, {}
       desc.instance_variable_set :@associations, {}
       desc.instance_variable_set :@origins, []
+      desc.instance_variable_set :@assoc_origins, []
       desc.instance_variable_set :@identifiers, {}
       desc.instance_variable_set :@finales, {}
     end
@@ -81,6 +84,7 @@ class Entity
     end
     def add_association name, entity_class
       @associations[name] = entity_class
+      @mappings["#{name}_ids".to_sym].each {|ev, pm| pm.id_association = entity_class.origins. include? ev}
       attr_reader name unless instance_methods(false).include? name
     end
     def add_identifier event, prop
@@ -103,6 +107,9 @@ class Entity
     def finale *events
       events.each {|event, prop| @finales[event] = prop}
     end
+    def plural_name
+      self.name.underscore.pluralize.to_sym
+    end
   end
 end
 
@@ -120,22 +127,32 @@ class EventType
     # def appends entity_class, prop
     # end
     def associates *args
-      left, right = args.reject {|arg| arg.instance_of? Symbol}
-      args.shift
-      left_from_arg = args[0].instance_of?(Symbol) ? args.shift : right.name.underscore.pluralize.to_sym
-      right_name = args[0].instance_of?(Symbol) ? args.shift : right.name.underscore.pluralize.to_sym
-      args.shift
-      right_from_arg = args[0].instance_of?(Symbol) ? args.shift : left.name.underscore.pluralize.to_sym
-      left_name = args[0].instance_of?(Symbol) ? args.shift : left.name.underscore.pluralize.to_sym
+      # Creates symmetrical associations between to Entity classes.
+      # An optional params can be given for each Entity class to
+      # explicitly set a name for the association.
 
-      left_meth = left.origins.include?(event_name) ? override : append
-      left.add_property_mapper event_name, "#{right_name}_ids".to_sym, left_meth, right.identifiers[event_name] || left_from_arg
-      left.add_association right_name, right
-      # p event_name, right.identifiers, right.identifiers[event_name], left_from_arg
-      right_meth = right.origins.include?(event_name) ? :+ : override
-      right.add_property_mapper event_name, "#{left_name}_ids".to_sym, right_meth, left.identifiers[event_name] || right_from_arg
-      right.add_association left_name, left
+      left_right = args.reject {|arg| arg.instance_of? Symbol}.map {|cls| {cls: cls}}
+
+      get_args = proc do |this, other|
+        args.shift
+        this[:ass_name] = args[0].instance_of?(Symbol) ? args.shift : other[:cls].plural_name
+      end
+
+      add_assoc = proc do |this, other|
+        eprop = other[:cls].identifiers[event_name]
+        # abort "identifier must be set for #{other[:cls]} to assosciate with #{this[:cls]} by #{event_name}" unless eprop
+        this[:cls].add_property_mapper event_name, "#{this[:ass_name]}_ids".to_sym, append, eprop
+        this[:cls].add_association this[:ass_name], other[:cls]
+      end
+
+      [get_args, add_assoc].each do |prozeder|
+        2.times do
+          prozeder.call *left_right
+          left_right.reverse!
+        end
+      end
     end
+
     def event_name
       self.name.split('::')[-1].to_sym
     end
@@ -150,7 +167,7 @@ class EventType
       proc do |old, new|
         # puts "append #{new} to #{old}";
         old ||= []
-        old << new
+        (old << new).flatten
       end
     end
   end
@@ -180,13 +197,16 @@ module EntityCollector
                   .reduce(IND_NONE, &:or)
     arel_upds = EV_ID.in PropertyIndex.select(:event_id).where(index_arels).map(&:event_id)
     arel_origs = EV_ID.in ids
+    dbg_msg :sql, index_arels.to_sql
+    dbg_msg :sql, arel_origs.or(arel_upds).to_sql
     Event.where(arel_origs.or(arel_upds)).order(:id).all.each do |ev|
       # p ev
       p_maps[ev.event.to_sym].each do |pm|
         # puts "#{pm.prop} #{pm.eprop}"
         idents = _ids(e_class, ids, ev, pm)
         idents.each do |id|
-          old, new = ents[id][pm.prop], ev.data[pm.eprop.to_s]
+          new = pm.id_association ? ev.id : ev.data[pm.eprop.to_s]
+          old = ents[id][pm.prop]
           if pm.meth.instance_of? Proc
             ents[id][pm.prop] = pm.meth.call(old, new)
           else
@@ -196,7 +216,7 @@ module EntityCollector
       end
     end
     instances = _instantiate e_class, ents
-    # puts "______________ get associations ___________________"
+    puts "______________ get associations ___________________"
     assocs.each do |ass_name, propsies|
       ass_class = e_class.associations[ass_name]
       instances.each do |inst|
@@ -269,6 +289,7 @@ class RecruitedEmployee < EventType
   contains Employee, :surname, override
   # contains Employee, :companies_ids, override, :companies
   associates Employee, Company
+  # associates Company, Employee
 end
 
 class UpdatedEmployee < EventType
@@ -283,6 +304,7 @@ class AssignedInterimStaff < EventType
   # contains Employee, :companies_ids, append, :company
   # associates Employee, :company, Company
   associates Employee, Company
+  # associates Company, Employee
 end
 
 class AddedEmailServerInstance < EventType
@@ -301,5 +323,5 @@ end
 # p Employee.instance_variable_get :@mappings
 
 # p EntityCollector::get Employee, [7,12], :name, :surname, :companies_ids
-p EntityCollector::get Employee, [7,12], :name, :surname, companies: [:name]
-# p EntityCollector::get Company, [1,8], :name, employees: [:name, :surname]
+pp EntityCollector::get Employee, [7,12], :name, :surname, companies: [:name]
+pp EntityCollector::get Company, [1,8], :name, employees: [:name, :surname]
