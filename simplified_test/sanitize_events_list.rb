@@ -7,14 +7,16 @@
 #############################################################
 
 require 'yaml'
+require 'date'
 
 # translate = %w(company email_server companies )
+debug = false
 
 file = ARGV[0] || 'data.yml'
 
 events = YAML::load_file(file)
 
-File.rename file, file.sub(/(\..+)?$/, '.bak\1')
+File.rename file, file.sub(/(\..+)?$/, '.bak\1') unless debug
 
 $before_after = events.each_with_index.map do |e, i|
   [e['id'], i+1]
@@ -32,6 +34,12 @@ def translate tok
   end
 end
 
-events.map! {|e| translate e}
+long_ago = DateTime.now - events.size
 
-File.write file, YAML::dump(events).gsub(/\n-/, "\n\n-")
+events.each_with_index do |e, i|
+  translate e
+  e['created_at'] = (long_ago + (i + rand)).to_s
+end
+
+puts  YAML::dump(events).gsub(/\n-/, "\n\n-") if debug
+File.write file, YAML::dump(events).gsub(/\n-/, "\n\n-") unless debug

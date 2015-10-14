@@ -4,29 +4,34 @@
   event: CreatedCompany
   data:
     name: HicknHack
+  created_at: '2015-09-21T15:13:09+02:00'
 
 - id: 2
   event: AddedEmailServerInstance
   data:
     ip: 192.168.0.54
     domain: hackyourself.com
+  created_at: '2015-09-22T16:03:51+02:00'
 
 - id: 3
   event: AssociatedCompanyEmailServer
   data:
     company: 1
     email_server: 2
+  created_at: '2015-09-23T19:35:47+02:00'
 
 - id: 4
   event: AddedRedmineServerInstance
   data:
     ip: 192.168.0.56
+  created_at: '2015-09-24T20:40:38+02:00'
 
 - id: 5
   event: AssociatedCompanyRedmineServer
   data:
     company: 1
     server: 4
+  created_at: '2015-09-25T23:30:13+02:00'
 
 - id: 6
   event: CreatedProject
@@ -34,6 +39,7 @@
     name: Hub Git
     company: 1
     server: 4
+  created_at: '2015-09-26T14:07:14+02:00'
 
 - id: 7
   event: RecruitedEmployee
@@ -44,11 +50,13 @@
     - 1
     projects:
     - 6
+  created_at: '2015-09-28T01:23:27+02:00'
 
 - id: 8
   event: AquiredCustomer
   data:
     name: PicknPack
+  created_at: '2015-09-28T13:55:36+02:00'
 
 - id: 9
   event: AssignedInterimStaff
@@ -56,6 +64,7 @@
     company: 8
     employees:
     - 7
+  created_at: '2015-09-30T07:15:50+02:00'
 
 - id: 10
   event: CreatedEmployeeEmailAddress
@@ -63,6 +72,7 @@
     employee: 7
     server: 2
     address: erika.fiedler@hackyourself.com
+  created_at: '2015-09-30T15:47:54+02:00'
 
 - id: 11
   event: AddedEmailAddressToServer
@@ -71,6 +81,7 @@
     server: 2
     path: "/vmail/erika.fiedler@hackyourself.com/"
     id: '11'
+  created_at: '2015-10-01T19:46:57+02:00'
 
 - id: 12
   event: RecruitedEmployee
@@ -81,17 +92,20 @@
     - 1
     projects:
     - 6
+  created_at: '2015-10-02T17:57:45+02:00'
 
 - id: 13
   event: AddedEmailServerInstance
   data:
     ip: 192.168.0.55
+  created_at: '2015-10-03T15:29:27+02:00'
 
 - id: 14
   event: AssociatedCompanyEmailServer
   data:
     company: 1
     email_server: 13
+  created_at: '2015-10-05T01:27:26+02:00'
 
 - id: 15
   event: CreatedEmployeeRedmineAccount
@@ -99,6 +113,7 @@
     server: 4
     employee: 7
     email: 10
+  created_at: '2015-10-05T10:29:22+02:00'
 
 - id: 16
   event: GotRedmineUserAccountId
@@ -106,12 +121,14 @@
     server: 4
     employee: 7
     id: '11'
+  created_at: '2015-10-06T20:54:26+02:00'
 
 - id: 17
   event: CreatedProject
   data:
     name: Zwitscher Zwitscher
     company: 1
+  created_at: '2015-10-07T16:08:29+02:00'
 
 - id: 18
   event: AddedProjectsToEmployee
@@ -119,12 +136,14 @@
     employee: 7
     projects:
     - 17
+  created_at: '2015-10-08T14:58:37+02:00'
 
 - id: 19
   event: UpdatedEmployee
   data:
     employee: 7
     name: Erica
+  created_at: '2015-10-09T11:48:11+02:00'
 
 - id: 20
   event: StartedProject
@@ -132,11 +151,13 @@
     name: FratzenBacke
     company: 1
     server: 4
+  created_at: '2015-10-10T14:05:49+02:00'
 
 - id: 21
   event: CompanyBankrupted
   data:
     company: 1
+  created_at: '2015-10-11T14:48:02+02:00'
 
 - id: 22
   event: AssignedEmployeesToProject
@@ -144,9 +165,11 @@
     employees:
     - 7
     project: 20
+  created_at: '2015-10-12T22:30:38+02:00'
 
 - id: 23
   event: DismissedEmployee
   data:
     company: 1
     employee: 7
+  created_at: '2015-10-13T15:10:21+02:00'

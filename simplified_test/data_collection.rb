@@ -20,6 +20,7 @@ ActiveRecord::Schema.define do
   create_table :events do |table|
     table.column :event, :string
     table.column :data, :text
+    table.column :created_at, :timestamp
   end
   create_table :property_index do |table|
     table.column :event, :string
@@ -52,7 +53,7 @@ class Event < ActiveRecord::Base
 
   serialize :data, JSON
   YAML::load_file('data.yml').each do |h|
-    create(id: h['id'], event: h['event'], data: h['data'])
+    create(id: h['id'], event: h['event'], data: h['data'], created_at: h['created_at'])
   end
 
 end
@@ -61,7 +62,7 @@ end
 PropertyMapper = Struct.new :event, :prop, :meth, :eprop, :id_origin, :identifier, :id_association
 
 class Entity
-  attr_reader :id
+  attr_reader :id, :created_at
   class << self
     attr_reader :identifiers, :origins, :associations, :assoc_origins, :finales
     def inherited desc
@@ -132,7 +133,7 @@ class EventType
     # end
     def associates *args
       # Creates symmetrical associations between to Entity classes.
-      # An optional params can be given for each Entity class to
+      # An optional arg can be given for each Entity class to
       # explicitly set a name for the association.
 
       left_right = args.reject {|arg| arg.instance_of? Symbol}.map {|cls| {cls: cls}}
@@ -144,7 +145,6 @@ class EventType
 
       add_assoc = proc do |this, other|
         eprop = other[:cls].identifiers[event_name]
-        # abort "identifier must be set for #{other[:cls]} to assosciate with #{this[:cls]} by #{event_name}" unless eprop
         this[:cls].add_property_mapper event_name, "#{this[:ass_name]}_ids".to_sym, append, eprop
         this[:cls].add_association this[:ass_name], other[:cls]
       end
@@ -215,6 +215,7 @@ module EntityCollector
         # puts "#{pm.prop} #{pm.eprop}"
         idents = _ids(e_class, ids, ev, pm)
         idents.each do |id|
+          ents[id][:created_at] = ev.created_at if pm.id_origin
           new = pm.id_association ? ev.id : ev.data[pm.eprop.to_s]
           old = ents[id][pm.prop]
           if pm.meth.instance_of? Proc
@@ -302,7 +303,7 @@ end
 # AssociatedCompanyRedmineServer CreatedProject RecruitedEmployee CreatedEmployeeEmailAddress AddedEmailAddressToServer CreatedEmployeeRedmineAccount GotRedmineUserAccountId AddedProjectsToEmployee UpdatedEmployee StartedProject AssignedEmployeesToProject
 
 class CreatedCompany < EventType
-  contains Company, :name, override
+  contains Company, :name, -> (o,n) { n.reverse }, :name # override
 end
 
 class AquiredCustomer < EventType
@@ -310,7 +311,7 @@ class AquiredCustomer < EventType
 end
 
 class CompanyBankrupted < EventType
-  updates Employee, :compan, :employees_ids, remove, :company
+  updates Employee, :company, :employees_ids, remove, :company
 end
 
 class RecruitedEmployee < EventType
