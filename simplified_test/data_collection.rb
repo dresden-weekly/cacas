@@ -5,7 +5,7 @@ require 'active_record'
 require 'active_support/inflector'
 require 'pp'
 
-DEBUG = [] # [:sql :events, :pmaps]
+DEBUG = [:events] # [:sql :events, :pmaps]
 
 def dbg_msg type, msg
   puts msg if DEBUG.include? type
@@ -64,12 +64,11 @@ PropertyMapper = Struct.new :event, :prop, :meth, :eprop, :id_origin, :identifie
 class Entity
   attr_reader :id, :created_at
   class << self
-    attr_reader :identifiers, :origins, :associations, :assoc_origins, :finales
+    attr_reader :identifiers, :origins, :associations, :finales, :mappings
     def inherited desc
       desc.instance_variable_set :@mappings, {}
       desc.instance_variable_set :@associations, {}
       desc.instance_variable_set :@origins, []
-      desc.instance_variable_set :@assoc_origins, []
       desc.instance_variable_set :@identifiers, {}
       desc.instance_variable_set :@finales, {}
     end
@@ -96,11 +95,11 @@ class Entity
       res = {}
       props.each do |p|
         @mappings[p].each do |ev, pm|
-          res[ev] ||= []
-          res[ev] << pm
+          res[ev] ||= {}
+          res[ev][p] = pm if pm.prop == p
         end
       end
-      res
+      res.reject {|k,v| v.size == 0}
     end
     def origin *events
       @origins += events
@@ -145,6 +144,7 @@ class EventType
 
       add_assoc = proc do |this, other|
         eprop = other[:cls].identifiers[event_name]
+        # puts "other[:cls]: #{other[:cls]},eprop: #{eprop} event_name: #{event_name}"
         this[:cls].add_property_mapper event_name, "#{this[:ass_name]}_ids".to_sym, append, eprop
         this[:cls].add_association this[:ass_name], other[:cls]
       end
@@ -189,29 +189,46 @@ module EntityCollector
   EV_EV = Event.arel_table[:event]
   EV_ID = Event.arel_table[:id]
   EV_NONE = Event.arel_table[:id].eq(0)
-  IND_EV = PropertyIndex.arel_table[:event]
-  # IND_EID = PropertyIndex.arel_table[:event_id]
-  IND_KEY = PropertyIndex.arel_table[:key]
-  IND_VAL = PropertyIndex.arel_table[:value]
-  IND_NONE = PropertyIndex.arel_table[:id].eq(0)
+  INDEX = PropertyIndex.arel_table
+  JNDEX = INDEX.alias('joined')
+  IND_EV = INDEX[:event]
+  JND_EV = JNDEX[:event]
+  IND_EID = INDEX[:event_id]
+  JND_EID = JNDEX[:event_id]
+  IND_KEY = INDEX[:key]
+  JND_KEY = JNDEX[:key]
+  IND_VAL = INDEX[:value]
+  IND_NONE = INDEX[:id].eq(0)
+  INDEX_JOIN = IND_EID.eq(JND_EID)
 
   def self.get e_class, ids, *props
     assocs = props[-1].instance_of?(Hash) ? props.pop : {}
     assocs.each_key {|k| props << "#{k}_ids".to_sym}
     ents = ids.map {|id| [id, {}]}.to_h
     p_maps = e_class.mappers_by_event props
-    dbg_msg :pmaps, ["________", props, p_maps]
-    index_arels = e_class.identifiers
-                  .select {|e,p| p_maps.keys.include? e}
-                  .map {|e,p| IND_EV.eq(e).and(IND_KEY.eq(p)).and(IND_VAL.in(ids))}
-                  .reduce(IND_NONE, &:or)
-    arel_upds = EV_ID.in PropertyIndex.select(:event_id).where(index_arels).map(&:event_id)
+    dbg_msg :pmaps, ["________", props, p_maps.map(&:inspect)]
+    index_arels = props.map do |p|
+                  e_class.identifiers
+                  .select {|e,pr| p_maps.keys.include?(e) && p_maps[e][p]}
+                  .map do |e,pr|
+                    res = IND_EV.eq(e).and(IND_KEY.eq(pr)).and(IND_VAL.in(ids))
+                    p_maps[e][p].id_association ?
+                      res :
+                      res.and(JND_KEY.eq(p_maps[e][p].eprop))
+                  end
+    end.flatten.reduce(IND_NONE, &:or)
+
+    join = INDEX.join(JNDEX).on(INDEX_JOIN).join_sources
+    # dbg_msg :sql, PropertyIndex.select(:event_id).where(index_arels).joins(join).to_sql
+    arel_upds = EV_ID.in PropertyIndex.select(:event_id).where(index_arels).joins(join).map(&:event_id).uniq
+    # arel_upds = EV_ID.in PropertyIndex.select(:event_id).where(index_arels).map(&:event_id).uniq
     arel_origs = EV_ID.in ids
     dbg_msg :sql, index_arels.to_sql
-    dbg_msg :sql, arel_origs.or(arel_upds).to_sql
+    # dbg_msg :sql, index_props.to_sql
+    # dbg_msg :sql, arel_origs.or(arel_upds).to_sql
     Event.where(arel_origs.or(arel_upds)).order(:id).all.each do |ev|
       dbg_msg :events, ev.inspect
-      p_maps[ev.event.to_sym].each do |pm|
+      p_maps[ev.event.to_sym].each do |p,pm|
         # puts "#{pm.prop} #{pm.eprop}"
         idents = _ids(e_class, ids, ev, pm)
         idents.each do |id|
@@ -228,6 +245,7 @@ module EntityCollector
     end
     instances = _instantiate e_class, ents
     assocs.each do |ass_name, propsies|
+      dbg_msg :events, "--------------- retrieving association '#{ass_name}' ---------------"
       ass_class = e_class.associations[ass_name]
       combined_ids = instances.map {|inst| inst.send "#{ass_name}_ids"}.flatten
       combined_results = get(ass_class, combined_ids, *propsies).map do |r_inst|
@@ -303,7 +321,7 @@ end
 # AssociatedCompanyRedmineServer CreatedProject RecruitedEmployee CreatedEmployeeEmailAddress AddedEmailAddressToServer CreatedEmployeeRedmineAccount GotRedmineUserAccountId AddedProjectsToEmployee UpdatedEmployee StartedProject AssignedEmployeesToProject
 
 class CreatedCompany < EventType
-  contains Company, :name, -> (o,n) { n.reverse }, :name # override
+  contains Company, :name, override
 end
 
 class AquiredCustomer < EventType
@@ -358,4 +376,6 @@ end
 # p EntityCollector::get Employee, [7,12], :name, :surname, :companies_ids
 # pp EntityCollector::get Employee, [7,12], :name, :surname, companies: [:name]
 pp EntityCollector::get Company, [1,8], :name, employees: [:name, :surname]
+# By the following line the :UpdatedEmployee event is ignored because only :name is updated in it.
+pp EntityCollector::get Company, [1,8], :name, employees: [:surname]
 # pp EntityCollector::get_all Company, :name, employees: [:name, :surname]

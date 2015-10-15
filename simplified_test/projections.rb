@@ -83,7 +83,7 @@ class Projection
     end
     def add_identifier event_name, prop
       @events[event_name][:identifier] = prop
-      @identifiers[event_name] = prop
+      # @identifiers[event_name] = prop
     end
     def add_properties event_name, props
       @events[event_name][:properties] = props
@@ -93,10 +93,10 @@ class Projection
     def add_handler event_name, handler
       @events[event_name][:handler] = handler
     end
-    def add_association opts
+    def add_association opts, event_name
       @associations[opts[:ass_name]] = opts[:ass_class]
-      # hier bin ich
-      @mappings["#{name}_ids".to_sym].each {|ev, pm| pm.id_association = entity_class.origins. include? ev}
+      puts "opts: #{opts} event_name: #{event_name}"
+      # @mappings["#{name}_ids".to_sym].each {|ev, pm| pm.id_association = entity_class.origins. include? ev}
       attr_reader name unless instance_methods(false).include? name
     end
     def plural_name
@@ -126,9 +126,9 @@ class ProjectionEvent
     # entity_class.add_property_mapper event_name, prop, meth, eprop
   end
   def associates *args
-    # # Creates symmetrical associations between to Entity classes.
-    # # An optional arg can be given for each Entity class to
-    # # explicitly set a name for the association.
+    # Creates symmetrical associations between to Entity classes.
+    # An optional arg can be given for each Entity class to
+    # explicitly set a name for the association.
 
     args.unshift projection_class
 
@@ -144,7 +144,7 @@ class ProjectionEvent
     add_assoc = proc do |this, other|
       # eprop = other[:cls].identifiers[event_name]
       # this[:cls].add_property_mapper event_name, "#{this[:ass_name]}_ids".to_sym, append, eprop
-      this[:cls].add_association this  #[:ass_name], other[:cls]
+      this[:cls].add_association this, event_name  #[:ass_name], other[:cls]
     end
 
     [get_args, add_assoc].each do |prozeder|
